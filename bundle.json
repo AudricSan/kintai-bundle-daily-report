@@ -1,7 +1,7 @@
 {
     "slug": "daily-report",
     "name": "Rapports journaliers",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Rapports d'activité quotidienne, workflow brouillon → soumis → validé.",
     "author": { "name": "AudricSan", "url": "https://github.com/AudricSan" },
     "kintai_core": { "min": "0.1.0", "max": "999.999.999" },

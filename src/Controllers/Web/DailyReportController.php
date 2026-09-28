@@ -128,12 +128,19 @@ final class DailyReportController
     {
         $authUser = $request->getAttribute('auth_user');
 
-        // Stores accessibles
-        if (!empty($authUser['is_admin'])) {
+        // Stores accessibles — is_admin (Owner) et une permission daily_reports.view
+        // accordée en portée globale (managed_store_ids === null, ex. rôle store-scope
+        // avec cette clé marquée "Toutes les boutiques") signifient la même chose ici :
+        // aucune restriction. Un simple "?? []" écraserait ce second cas à tort : la
+        // liste passerait par la convention "aucun filtre" de findAllActive() (donc les
+        // rapports resteraient visibles par accident), mais $allStores resterait vide et
+        // le sélecteur de magasin n'afficherait plus rien pour cet utilisateur.
+        $managedIds     = $request->getAttribute('managed_store_ids');
+        $isUnrestricted = !empty($authUser['is_admin']) || $managedIds === null;
+        if ($isUnrestricted) {
             $allStores      = $this->stores->findActive();
             $storeIdsFilter = [];
         } else {
-            $managedIds = $request->getAttribute('managed_store_ids') ?? [];
             $allStores  = array_values(array_filter(
                 array_map(fn($id) => $this->stores->findById($id), $managedIds),
             ));
@@ -149,7 +156,7 @@ final class DailyReportController
         // Appliquer le filtre par store (si l'utilisateur a accès à ce store)
         $queryStoreIds = $storeIdsFilter;
         if ($filterStoreId > 0) {
-            if (empty($authUser['is_admin']) && !in_array($filterStoreId, $storeIdsFilter, true)) {
+            if (!$isUnrestricted && !in_array($filterStoreId, $storeIdsFilter, true)) {
                 throw new ForbiddenException(__('error_daily_report_access_denied'));
             }
             $queryStoreIds = [$filterStoreId];
@@ -539,7 +546,15 @@ final class DailyReportController
             'report_date' => $report['report_date'],
         ], $storeId);
 
-        $this->notifyManagers($storeId, 'daily_reports.approve', 'daily_report_submitted', 'Un rapport journalier attend votre validation.', $reportId);
+        $this->notifyManagers(
+            $storeId,
+            'daily_reports.approve',
+            'daily_report_submitted',
+            'notif_daily_report_submitted_body',
+            $reportId,
+            ['store' => $store['name'] ?? '', 'date' => $report['report_date'] ?? ''],
+            '/admin/stores/' . $storeId . '/daily-reports/' . $reportId
+        );
 
         return Response::redirect($this->base() . '/admin/stores/' . $storeId . '/daily-reports/' . $reportId);
     }
@@ -580,7 +595,14 @@ final class DailyReportController
 
         $authorId = (int) ($report['author_id'] ?? 0);
         if ($authorId > 0 && $authorId !== (int) $authUser['id']) {
-            $this->notifs->notify($authorId, 'daily_report_validated', 'notif_daily_report_validated_body', [], $reportId);
+            $this->notifs->notify(
+                $authorId,
+                'daily_report_validated',
+                'notif_daily_report_validated_body',
+                ['store' => $store['name'] ?? '', 'date' => $report['report_date'] ?? ''],
+                $reportId,
+                '/admin/stores/' . $storeId . '/daily-reports/' . $reportId
+            );
         }
 
         // Envoi automatique si configuré
@@ -889,7 +911,7 @@ final class DailyReportController
     }
 
     /** Notifie les membres du store détenant $permissionKey (ex. les managers pouvant valider). */
-    private function notifyManagers(int $storeId, string $permissionKey, string $type, string $bodyKey, int $referenceId): void
+    private function notifyManagers(int $storeId, string $permissionKey, string $type, string $bodyKey, int $referenceId, array $replace = [], ?string $link = null): void
     {
         $recipients = [];
         foreach ($this->storeUsers->findByStore($storeId) as $m) {
@@ -900,7 +922,7 @@ final class DailyReportController
             }
         }
         if ($recipients !== []) {
-            $this->notifs->notifyMany($recipients, $type, $bodyKey, [], $referenceId);
+            $this->notifs->notifyMany($recipients, $type, $bodyKey, $replace, $referenceId, $link);
         }
     }
 

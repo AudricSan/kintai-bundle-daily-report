@@ -546,7 +546,15 @@ final class DailyReportController
             'report_date' => $report['report_date'],
         ], $storeId);
 
-        $this->notifyManagers($storeId, 'daily_reports.approve', 'daily_report_submitted', 'Un rapport journalier attend votre validation.', $reportId);
+        $this->notifyManagers(
+            $storeId,
+            'daily_reports.approve',
+            'daily_report_submitted',
+            'notif_daily_report_submitted_body',
+            $reportId,
+            ['store' => $store['name'] ?? '', 'date' => $report['report_date'] ?? ''],
+            '/admin/stores/' . $storeId . '/daily-reports/' . $reportId
+        );
 
         return Response::redirect($this->base() . '/admin/stores/' . $storeId . '/daily-reports/' . $reportId);
     }
@@ -587,7 +595,14 @@ final class DailyReportController
 
         $authorId = (int) ($report['author_id'] ?? 0);
         if ($authorId > 0 && $authorId !== (int) $authUser['id']) {
-            $this->notifs->notify($authorId, 'daily_report_validated', 'notif_daily_report_validated_body', [], $reportId);
+            $this->notifs->notify(
+                $authorId,
+                'daily_report_validated',
+                'notif_daily_report_validated_body',
+                ['store' => $store['name'] ?? '', 'date' => $report['report_date'] ?? ''],
+                $reportId,
+                '/admin/stores/' . $storeId . '/daily-reports/' . $reportId
+            );
         }
 
         // Envoi automatique si configuré
@@ -896,7 +911,7 @@ final class DailyReportController
     }
 
     /** Notifie les membres du store détenant $permissionKey (ex. les managers pouvant valider). */
-    private function notifyManagers(int $storeId, string $permissionKey, string $type, string $bodyKey, int $referenceId): void
+    private function notifyManagers(int $storeId, string $permissionKey, string $type, string $bodyKey, int $referenceId, array $replace = [], ?string $link = null): void
     {
         $recipients = [];
         foreach ($this->storeUsers->findByStore($storeId) as $m) {
@@ -907,7 +922,7 @@ final class DailyReportController
             }
         }
         if ($recipients !== []) {
-            $this->notifs->notifyMany($recipients, $type, $bodyKey, [], $referenceId);
+            $this->notifs->notifyMany($recipients, $type, $bodyKey, $replace, $referenceId, $link);
         }
     }
 

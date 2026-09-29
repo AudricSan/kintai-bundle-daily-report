@@ -162,7 +162,7 @@ $noReportTime      = $settings['no_report_time']     ?? '18:00';
 
 </form>
 
-<script>
+<script nonce="<?= function_exists('csp_nonce') ? csp_nonce() : '' ?>">
 (function() {
     var toggles = document.querySelectorAll('.dr-col-toggle');
     toggles.forEach(function(cb) {

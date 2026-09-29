@@ -85,10 +85,10 @@ unset($months, $days);
     <h2 class="page-header__title"><?= __('dr_title') ?></h2>
     <div class="btn-group btn-group--switcher" id="dr-view-switcher">
         <span class="btn-group__thumb" aria-hidden="true"></span>
-        <button type="button" class="btn btn--ghost btn--sm" id="dr-btn-v1" onclick="drSwitchView('v1')">
+        <button type="button" class="btn btn--ghost btn--sm" id="dr-btn-v1" data-on-click="drSwitchView" data-args='["v1"]'>
             ☰ <?= __('dr_view_by_store') ?>
         </button>
-        <button type="button" class="btn btn--ghost btn--sm" id="dr-btn-v2" onclick="drSwitchView('v2')">
+        <button type="button" class="btn btn--ghost btn--sm" id="dr-btn-v2" data-on-click="drSwitchView" data-args='["v2"]'>
             📅 <?= __('dr_view_by_day') ?>
         </button>
     </div>
@@ -101,7 +101,7 @@ unset($months, $days);
         <div class="shifts-filters__row">
             <div class="shifts-filters__group">
                 <label class="shifts-filters__label" for="dr-store"><?= __('store') ?></label>
-                <select id="dr-store" name="store_id" class="form-control form-control-sm" onchange="this.form.submit()">
+                <select id="dr-store" name="store_id" class="form-control form-control-sm" data-submit-on-change>
                     <option value="0"><?= __('dr_filter_all_stores') ?></option>
                     <?php foreach ($stores as $s): ?>
                         <option value="<?= (int)$s['id'] ?>" <?= $filterStoreId === (int)$s['id'] ? 'selected' : '' ?>>
@@ -112,7 +112,7 @@ unset($months, $days);
             </div>
             <div class="shifts-filters__group">
                 <label class="shifts-filters__label" for="dr-status"><?= __('status') ?></label>
-                <select id="dr-status" name="status" class="form-control form-control-sm" onchange="this.form.submit()">
+                <select id="dr-status" name="status" class="form-control form-control-sm" data-submit-on-change>
                     <option value=""><?= __('all') ?></option>
                     <?php foreach (['draft', 'submitted', 'validated'] as $s): ?>
                         <option value="<?= $s ?>" <?= $filterStatus === $s ? 'selected' : '' ?>>
@@ -123,7 +123,7 @@ unset($months, $days);
             </div>
             <div class="shifts-filters__group">
                 <label class="shifts-filters__label" for="dr-year"><?= __('dr_filter_year') ?></label>
-                <select id="dr-year" name="year" class="form-control form-control-sm" onchange="this.form.submit()">
+                <select id="dr-year" name="year" class="form-control form-control-sm" data-submit-on-change>
                     <option value="0"><?= __('all') ?></option>
                     <?php foreach ($years as $y): ?>
                         <option value="<?= $y ?>" <?= $filterYear === $y ? 'selected' : '' ?>><?= $y ?></option>
@@ -132,7 +132,7 @@ unset($months, $days);
             </div>
             <div class="shifts-filters__group">
                 <label class="shifts-filters__label" for="dr-month"><?= __('dr_filter_month') ?></label>
-                <select id="dr-month" name="month" class="form-control form-control-sm" onchange="this.form.submit()">
+                <select id="dr-month" name="month" class="form-control form-control-sm" data-submit-on-change>
                     <option value="0"><?= __('all') ?></option>
                     <?php foreach ($monthNames as $num => $name): ?>
                         <option value="<?= $num ?>" <?= $filterMonth === $num ? 'selected' : '' ?>><?= $name ?></option>
@@ -153,7 +153,7 @@ unset($months, $days);
         <div class="shifts-filters__row">
             <div class="shifts-filters__group">
                 <label class="shifts-filters__label" for="dr-year-v2"><?= __('dr_filter_year') ?></label>
-                <select id="dr-year-v2" name="year" class="form-control form-control-sm" onchange="this.form.submit()">
+                <select id="dr-year-v2" name="year" class="form-control form-control-sm" data-submit-on-change>
                     <option value="0"><?= __('all') ?></option>
                     <?php foreach ($years as $y): ?>
                         <option value="<?= $y ?>" <?= $filterYear === $y ? 'selected' : '' ?>><?= $y ?></option>
@@ -263,12 +263,12 @@ unset($months, $days);
                                 <td>
                                     <?php if ($st === 'validated'): ?>
                                         <a href="<?= $BASE_URL ?>/admin/stores/<?= $sid ?>/daily-reports/<?= $rid ?>/pdf"
-                                           class="btn btn--ghost btn--xs" target="_blank" onclick="event.stopPropagation()">PDF</a>
+                                           class="btn btn--ghost btn--xs" target="_blank" data-stop-propagation>PDF</a>
                                     <?php endif; ?>
                                     <?php if (!empty($authUser['is_admin'])): ?>
                                         <form method="POST" action="<?= $BASE_URL ?>/admin/stores/<?= $sid ?>/daily-reports/<?= $rid ?>/delete" class="form-inline" data-confirm="<?= htmlspecialchars(__('dr_confirm_delete'), ENT_QUOTES) ?>">
                                             <?= csrf_field() ?>
-                                            <button type="submit" class="btn btn--danger btn--xs" onclick="event.stopPropagation()"><?= __('delete') ?></button>
+                                            <button type="submit" class="btn btn--danger btn--xs" data-stop-propagation><?= __('delete') ?></button>
                                         </form>
                                     <?php endif; ?>
                                 </td>
@@ -331,7 +331,7 @@ unset($months, $days);
                 $monthId = 'dr-month-' . $year . '-' . $month;
                 ?>
                 <div class="dr-v2-month">
-                    <button type="button" class="dr-v2-month-toggle" onclick="drV2ToggleMonth('<?= $monthId ?>')">
+                    <button type="button" class="dr-v2-month-toggle" data-on-click="drV2ToggleMonth" data-args="<?= htmlspecialchars(json_encode([$monthId]), ENT_QUOTES) ?>">
                         <span class="dr-v2-month-name"><?= $monthNames[$month] ?? $month ?></span>
                         <span class="dr-v2-month-stats text-muted">
                             <?= __('dr_sales') ?> <strong><?= drAllFormatNum($monthTotals['sales_total']) ?></strong>
@@ -420,7 +420,7 @@ unset($months, $days);
                                             <td>
                                                 <button type="button"
                                                         class="btn btn--ghost btn--xs"
-                                                        onclick="drV2OpenDetail(this)"
+                                                        data-on-click="drV2OpenDetail" data-args='["@this"]'
                                                         data-day="<?= $modalJson ?>">
                                                     ▶ <?= __('see_details') ?>
                                                 </button>
@@ -452,11 +452,11 @@ unset($months, $days);
 <!-- =========================================================
      Modal détail V2
      ========================================================= -->
-<div id="dr-v2-overlay" class="dr-v2-overlay" onclick="drV2CloseDetail()">
-    <div class="dr-v2-modal" onclick="event.stopPropagation()">
+<div id="dr-v2-overlay" class="dr-v2-overlay" data-on-click="drV2CloseDetail">
+    <div class="dr-v2-modal" data-stop-propagation>
         <div class="dr-v2-modal-header">
             <strong id="dr-v2-modal-title"></strong>
-            <button type="button" onclick="drV2CloseDetail()" class="sb-modal-close">×</button>
+            <button type="button" data-on-click="drV2CloseDetail" class="sb-modal-close">×</button>
         </div>
         <div class="dr-v2-modal-body">
             <div class="table-wrap">
@@ -479,12 +479,12 @@ unset($months, $days);
             </div>
         </div>
         <div class="dr-v2-modal-footer">
-            <button type="button" onclick="drV2CloseDetail()" class="btn btn--ghost btn--sm"><?= __('close') ?></button>
+            <button type="button" data-on-click="drV2CloseDetail" class="btn btn--ghost btn--sm"><?= __('close') ?></button>
         </div>
     </div>
 </div>
 
-<script>
+<script nonce="<?= function_exists('csp_nonce') ? csp_nonce() : '' ?>">
 (function () {
     var LS_KEY = 'kintai_dr_view';
 

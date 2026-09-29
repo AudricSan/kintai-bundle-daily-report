@@ -77,6 +77,9 @@ foreach ($byYearMonth as &$months) {
 }
 unset($months, $days);
 ?>
+<?php if ($dailyReportCss = bundle_asset('daily-report', 'css/daily-report.css')): ?>
+<link rel="stylesheet" href="<?= $dailyReportCss ?>">
+<?php endif; ?>
 
 <div class="page-header">
     <h2 class="page-header__title"><?= __('dr_title') ?></h2>

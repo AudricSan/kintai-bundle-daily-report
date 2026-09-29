@@ -46,6 +46,9 @@ function drShowNum(mixed $n, int $dec = 0): string {
     return number_format((float) $n, $dec, ',', ' ');
 }
 ?>
+<?php if ($dailyReportCss = bundle_asset('daily-report', 'css/daily-report.css')): ?>
+<link rel="stylesheet" href="<?= $dailyReportCss ?>">
+<?php endif; ?>
 
 <?php if (isset($_GET['mail'])): ?>
     <?php if ($_GET['mail'] === '1'): ?>

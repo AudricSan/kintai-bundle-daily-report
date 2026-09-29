@@ -48,6 +48,7 @@ final class DailyReportBundle extends Bundle
         $this->registerServices();
         $this->loadViewsFrom($this->getPath() . '/Views', 'daily-report');
         $this->loadRoutesFrom($this->getPath() . '/routes.php');
+        $this->loadAssetsFrom('public');
     }
 
     private function registerServices(): void

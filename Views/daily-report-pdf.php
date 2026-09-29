@@ -53,7 +53,7 @@ $bodyFont = $locale === 'ja'
 <style>
 <?php
 echo file_get_contents(dirname(__DIR__, 4) . '/public/assets/css/pdf/pdf-base.css');
-echo file_get_contents(dirname(__DIR__, 4) . '/public/assets/css/pdf/pdf-daily-report.css');
+echo file_get_contents(bundle_asset_path('daily-report', 'css/pdf-daily-report.css') ?? '');
 echo file_get_contents(dirname(__DIR__, 4) . '/public/assets/css/pdf/pdf-brand.css');
 echo file_get_contents(dirname(__DIR__, 4) . '/public/assets/css/pdf/pdf-preview.css');
 ?>

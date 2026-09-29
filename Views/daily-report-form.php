@@ -201,4 +201,6 @@ $backUrl   = back_url($isEdit
 
 </form>
 
-<script src="<?= $BASE_URL ?>/assets/js/modules/numeric-input.js"></script>
+<?php if ($numericInputJs = bundle_asset('daily-report', 'js/numeric-input.js')): ?>
+<script src="<?= $numericInputJs ?>"></script>
+<?php endif; ?>

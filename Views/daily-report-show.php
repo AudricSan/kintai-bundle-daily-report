@@ -236,7 +236,7 @@ $shiftRows = $shiftRows ?? [];
             <?php if ($canSubmit): ?>
                 <form method="POST"
                       action="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/<?= $reportId ?>/submit"
-                      onsubmit="return confirm('<?= __('dr_confirm_submit') ?>')">
+                      data-confirm="<?= htmlspecialchars(__('dr_confirm_submit'), ENT_QUOTES) ?>">
                     <?= csrf_field() ?>
                     <button type="submit" class="btn btn--warning"><?= __('dr_submit') ?></button>
                 </form>
@@ -245,7 +245,7 @@ $shiftRows = $shiftRows ?? [];
             <?php if ($canValidate): ?>
                 <form method="POST"
                       action="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/<?= $reportId ?>/validate"
-                      onsubmit="return confirm('<?= __('dr_confirm_validate') ?>')">
+                      data-confirm="<?= htmlspecialchars(__('dr_confirm_validate'), ENT_QUOTES) ?>">
                     <?= csrf_field() ?>
                     <button type="submit" class="btn btn--success"><?= __('dr_validate') ?></button>
                 </form>
@@ -254,7 +254,7 @@ $shiftRows = $shiftRows ?? [];
             <?php if ($canSendMail && !empty($settings['mail_recipients'])): ?>
                 <form method="POST"
                       action="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/<?= $reportId ?>/send-mail"
-                      onsubmit="return confirm('<?= __('dr_confirm_send_mail') ?>')">
+                      data-confirm="<?= htmlspecialchars(__('dr_confirm_send_mail'), ENT_QUOTES) ?>">
                     <?= csrf_field() ?>
                     <button type="submit" class="btn btn--ghost">✉ <?= __('dr_send_mail') ?></button>
                 </form>

@@ -96,7 +96,7 @@ if ($canCreate && ($settings['enabled'] ?? true) && $_currentTime >= $_reminderT
             <?= csrf_field() ?>
             <div class="form-group">
                 <label class="form-label"><?= __('status') ?></label>
-                <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
+                <select name="status" class="form-control form-control-sm" data-submit-on-change>
                     <option value=""><?= __('all') ?></option>
                     <?php foreach (['draft','submitted','validated'] as $s): ?>
                         <option value="<?= $s ?>" <?= $status === $s ? 'selected' : '' ?>>
@@ -109,13 +109,13 @@ if ($canCreate && ($settings['enabled'] ?? true) && $_currentTime >= $_reminderT
                 <label class="form-label"><?= __('from') ?></label>
                 <input type="date" name="from" class="form-control form-control-sm"
                        value="<?= htmlspecialchars($fromDate) ?>"
-                       onchange="this.form.submit()">
+                       data-submit-on-change>
             </div>
             <div class="form-group">
                 <label class="form-label"><?= __('to') ?></label>
                 <input type="date" name="to" class="form-control form-control-sm"
                        value="<?= htmlspecialchars($toDate) ?>"
-                       onchange="this.form.submit()">
+                       data-submit-on-change>
             </div>
             <div class="form-group">
                 <a href="?" class="btn btn--ghost btn--sm"><?= __('reset') ?></a>
@@ -175,7 +175,7 @@ if ($canCreate && ($settings['enabled'] ?? true) && $_currentTime >= $_reminderT
                             <td data-label="PDF">
                                 <?php if (($report['status'] ?? '') === 'validated'): ?>
                                     <a href="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/<?= $rid ?>/pdf"
-                                       class="btn btn--ghost btn--xs" target="_blank" onclick="event.stopPropagation()">PDF</a>
+                                       class="btn btn--ghost btn--xs" target="_blank" data-stop-propagation>PDF</a>
                                 <?php else: ?>
                                     <span class="text-muted">—</span>
                                 <?php endif; ?>
@@ -184,7 +184,7 @@ if ($canCreate && ($settings['enabled'] ?? true) && $_currentTime >= $_reminderT
                                 <?php if ($isAdmin): ?>
                                     <form method="POST" action="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/<?= $rid ?>/delete" class="form-inline" data-confirm="<?= htmlspecialchars(__('dr_confirm_delete'), ENT_QUOTES) ?>">
                                         <?= csrf_field() ?>
-                                        <button type="submit" class="btn btn--danger btn--xs" onclick="event.stopPropagation()"><?= __('delete') ?></button>
+                                        <button type="submit" class="btn btn--danger btn--xs" data-stop-propagation><?= __('delete') ?></button>
                                     </form>
                                 <?php endif; ?>
                             </td>

@@ -511,11 +511,15 @@ unset($months, $days);
     }
 
     window.drSwitchView = function (v) {
-        localStorage.setItem(LS_KEY, v);
+        try { localStorage.setItem(LS_KEY, v); } catch (e) {}
         applyView(v);
     };
 
-    applyView(localStorage.getItem(LS_KEY) || 'v1');
+    // Vue par défaut : par jour (v2). Le choix fait avec le bouton est retenu dans le navigateur. Lecture protégée :
+    // localStorage peut lever une erreur (navigation privée, stockage bloqué), ce qui laissait les deux vues affichées.
+    var savedView = null;
+    try { savedView = localStorage.getItem(LS_KEY); } catch (e) {}
+    applyView(savedView === 'v1' || savedView === 'v2' ? savedView : 'v2');
 
     // ---- Collapse mois ----
     window.drV2ToggleMonth = function (id) {
@@ -532,7 +536,8 @@ unset($months, $days);
     document.querySelectorAll('.dr-v2-month-body').forEach(function (body) {
         var id    = body.id;
         var arrow = document.getElementById(id + '-arrow');
-        var state = localStorage.getItem('kintai_dr_month_' + id);
+        var state = null;
+        try { state = localStorage.getItem('kintai_dr_month_' + id); } catch (e) {}
         if (state === 'closed') {
             body.style.display = 'none';
             if (arrow) arrow.textContent = '▶';

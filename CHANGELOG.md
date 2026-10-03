@@ -8,6 +8,10 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+### Fixed
+
+- Sécurité — `POST`/`PUT /api/v1/daily-reports` fusionnaient le JSON brut du client dans `save()` (upsert dès qu'un `id` est présent) : un `id` écrasait le rapport de quelqu'un d'autre en contournant `canEdit()`, `author_id` était pris du client (un rapport pouvait être attribué à un tiers) et `PUT` laissait modifier `store_id`, `status`, la validation ou le PDF. Seuls `report_date`, `sales_total`, `customer_count`, `labor_cost`, `waste_total`, `notes` et `data` sont lus ; l'auteur est l'appelant, le statut initial est `draft`, et les transitions passent par `submit`/`validate`.
+
 ### Changed
 
 - Liste des rapports journaliers (`/admin/daily-reports`) : la vue par défaut est désormais **par jour** au lieu de par magasin. Le choix fait avec le bouton de bascule reste mémorisé dans le navigateur. La lecture de ce choix est protégée : en navigation privée ou avec un stockage bloqué, `localStorage` levait une erreur et les deux vues restaient affichées l'une sous l'autre.

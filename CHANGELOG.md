@@ -8,6 +8,10 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+### Added
+
+- Socle de tests PHPUnit (composer.json, phpunit.xml) et CI qui l'exécute contre le vrai Core : les tests que le Core faisait tourner sur une copie figée du bundle (fixtures 1.0.0) vivent désormais ici et testent le code réel.
+
 ### Fixed
 
 - Sécurité — `POST`/`PUT /api/v1/daily-reports` fusionnaient le JSON brut du client dans `save()` (upsert dès qu'un `id` est présent) : un `id` écrasait le rapport de quelqu'un d'autre en contournant `canEdit()`, `author_id` était pris du client (un rapport pouvait être attribué à un tiers) et `PUT` laissait modifier `store_id`, `status`, la validation ou le PDF. Seuls `report_date`, `sales_total`, `customer_count`, `labor_cost`, `waste_total`, `notes` et `data` sont lus ; l'auteur est l'appelant, le statut initial est `draft`, et les transitions passent par `submit`/`validate`.

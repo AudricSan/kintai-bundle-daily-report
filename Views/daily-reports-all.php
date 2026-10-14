@@ -1,5 +1,5 @@
 <?php
-use kintai\UI\Components\Badge;
+use kintai\Contract\View\Components\Badge;
 
 /**
  * @var array  $grouped        [ storeId => ['store' => [...], 'reports' => [...]] ]  (V1 – filtré complet)

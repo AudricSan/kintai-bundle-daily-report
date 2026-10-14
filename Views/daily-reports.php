@@ -1,5 +1,5 @@
 <?php
-use kintai\UI\Components\Badge;
+use kintai\Contract\View\Components\Badge;
 
 /**
  * @var array  $store
@@ -54,7 +54,7 @@ function drFormatNum(mixed $n, int $dec = 0): string {
 }
 ?>
 
-<?= \kintai\UI\Components\Flash::fromQuery('success', ['deleted' => __('dr_deleted')])->render() ?>
+<?= \kintai\Contract\View\Components\Flash::fromQuery('success', ['deleted' => __('dr_deleted')])->render() ?>
 
 <?php
 $_currentTime    = date('H:i');

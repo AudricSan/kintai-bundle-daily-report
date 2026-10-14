@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\DailyReport\Controllers\Web;
 
-use kintai\Core\Auth\PermissionService;
-use kintai\Core\Exceptions\ForbiddenException;
-use kintai\Core\Exceptions\NotFoundException;
+use kintai\Contract\Auth\PermissionService;
+use kintai\Contract\Exceptions\ForbiddenException;
+use kintai\Contract\Exceptions\NotFoundException;
 use kintai\Core\Repositories\DailyReportRepositoryInterface;
-use kintai\Core\Repositories\ShiftRepositoryInterface;
-use kintai\Core\Repositories\ShiftTypeRepositoryInterface;
-use kintai\Core\Repositories\StoreRepositoryInterface;
-use kintai\Core\Repositories\StoreUserRepositoryInterface;
-use kintai\Core\Repositories\UserRepositoryInterface;
-use kintai\Core\Request;
-use kintai\Core\Response;
-use kintai\Core\Services\AuditLogger;
+use kintai\Contract\Data\ShiftRepositoryInterface;
+use kintai\Contract\Data\ShiftTypeRepositoryInterface;
+use kintai\Contract\Data\StoreRepositoryInterface;
+use kintai\Contract\Data\StoreUserRepositoryInterface;
+use kintai\Contract\Data\UserRepositoryInterface;
+use kintai\Contract\Http\Request;
+use kintai\Contract\Http\Response;
+use kintai\Contract\Services\AuditLogger;
 use kintai\Core\Services\DailyReportMailService;
 use kintai\Core\Services\DailyReportPdfService;
 use kintai\Core\Services\DailyReportPermissionService;
-use kintai\Core\Services\NotificationService;
-use kintai\Core\Services\TranslationService;
-use kintai\UI\ViewRenderer;
+use kintai\Contract\Services\NotificationService;
+use kintai\Contract\Services\TranslationService;
+use kintai\Contract\View\ViewRenderer;
 
 final class DailyReportController
 {

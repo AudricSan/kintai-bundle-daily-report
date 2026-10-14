@@ -10,7 +10,7 @@ use kintai\Contract\View\Components\Badge;
  * @var array  $settings
  * @var array  $authUser
  * @var array|null $membership
- * @var \kintai\Core\Services\DailyReportPermissionService $permissions
+ * @var \kintai\Bundles\Installed\DailyReport\Services\DailyReportPermissionService $permissions
  * @var string $BASE_URL
  */
 $storeId  = (int) $store['id'];

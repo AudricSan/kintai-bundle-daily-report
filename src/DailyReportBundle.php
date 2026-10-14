@@ -4,23 +4,35 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\DailyReport;
 
+use kintai\Bundles\Installed\DailyReport\Cron\AutoValidateJob;
+use kintai\Bundles\Installed\DailyReport\Providers\DailyReportSales;
+use kintai\Bundles\Installed\DailyReport\Repositories\DailyReportRepositoryInterface;
+use kintai\Bundles\Installed\DailyReport\Repositories\DatabaseDailyReportRepository;
+use kintai\Bundles\Installed\DailyReport\Services\DailyReportAutoValidateService;
+use kintai\Bundles\Installed\DailyReport\Services\DailyReportMailService;
+use kintai\Bundles\Installed\DailyReport\Services\DailyReportPdfService;
 use kintai\Contract\Auth\AuthService;
+use kintai\Contract\Auth\PermissionService;
 use kintai\Contract\Bundle;
 use kintai\Contract\Container;
 use kintai\Contract\Data\StoreRepositoryInterface;
+use kintai\Contract\Data\ShiftRepositoryInterface;
+use kintai\Contract\Data\ShiftTypeRepositoryInterface;
 use kintai\Contract\Data\StoreUserRepositoryInterface;
+use kintai\Contract\Data\UserRepositoryInterface;
 use kintai\Contract\Extension\NavItem;
 use kintai\Contract\Extension\StoreFeature;
-use kintai\Core\Services\DailyReportPermissionService;
+use kintai\Contract\Services\Mailer;
+use kintai\Contract\Services\TranslationService;
+use kintai\Contract\View\ViewRenderer;
+use kintai\Bundles\Installed\DailyReport\Services\DailyReportPermissionService;
 
 /**
- * Le repository et les services métier (permission, PDF, mail, auto-validate)
- * sont liés par Kintai Core (RepositoryServiceProvider/AppServiceProvider), pas
- * par ce bundle : plusieurs composants Core (DailyReportNavMiddleware,
- * AutoValidateJob/CronController) en dépendent directement et doivent
- * continuer de fonctionner même si ce bundle est désactivé ou désinstallé —
- * même exception que Timeoff/ShiftSwap/Timeclock (voir docs/architecture.md
- * "Modular Bundles" côté Kintai).
+ * Le bundle possède son modèle, son dépôt, sa table (daily_reports) et ses services (droits, PDF, e-mail, validation
+ * automatique), liés ici. Ce qu'il apporte au Core passe par ses déclarations : navigation, permissions, fonctionnalité
+ * par magasin, magasins de l'employé pour la navigation (viewVariables), tâche planifiée « auto-validate »,
+ * notifications et ventes journalières (fournisseur de ventes, lu par la rentabilité du Core et par salary-report).
+ * Désactiver ou désinstaller « daily-report » retire tout cela ; la table et ses données restent.
  */
 final class DailyReportBundle extends Bundle
 {
@@ -46,9 +58,41 @@ final class DailyReportBundle extends Bundle
 
     public function register(): void
     {
+        $this->registerServices();
         $this->loadViewsFrom($this->getPath() . '/Views', 'daily-report');
         $this->loadRoutesFrom($this->getPath() . '/routes.php');
         $this->loadAssetsFrom('public');
+    }
+
+    /** Dépôt et services du bundle (une instance par requête). */
+    private function registerServices(): void
+    {
+        $container = $this->app->container();
+
+        $container->singleton(DailyReportRepositoryInterface::class, fn() => new DatabaseDailyReportRepository());
+        $container->singleton(DailyReportPermissionService::class, fn(Container $c) => new DailyReportPermissionService(
+            $c->make(PermissionService::class),
+        ));
+        $container->singleton(DailyReportPdfService::class, fn(Container $c) => new DailyReportPdfService(
+            $c->make(ViewRenderer::class),
+            $c->make(TranslationService::class),
+            $c->make(ShiftRepositoryInterface::class),
+            $c->make(ShiftTypeRepositoryInterface::class),
+            $c->make(UserRepositoryInterface::class),
+        ));
+        $container->singleton(DailyReportMailService::class, fn(Container $c) => new DailyReportMailService(
+            $c->make(DailyReportPermissionService::class),
+            $c->make(Mailer::class),
+            $c->make(TranslationService::class),
+        ));
+        $container->singleton(DailyReportAutoValidateService::class, fn(Container $c) => new DailyReportAutoValidateService(
+            $c->make(StoreRepositoryInterface::class),
+            $c->make(DailyReportRepositoryInterface::class),
+            $c->make(UserRepositoryInterface::class),
+            $c->make(DailyReportPermissionService::class),
+            $c->make(DailyReportPdfService::class),
+            $c->make(DailyReportMailService::class),
+        ));
     }
 
     /**
@@ -122,5 +166,29 @@ final class DailyReportBundle extends Bundle
                 return $accessible;
             },
         ];
+    }
+
+    /**
+     * Tâche planifiée « auto-validate » (contrat 1.8) : /cron/run/auto-validate ou php scripts/cron.php auto-validate.
+     */
+    public function cronJobs(): array
+    {
+        return [AutoValidateJob::class];
+    }
+
+    /**
+     * Types de notification (contrat 1.7) : rapport soumis (aux valideurs), rapport validé (à l'auteur).
+     */
+    public function notificationTypes(): array
+    {
+        return ['daily_report_submitted' => '📝', 'daily_report_validated' => '✓'];
+    }
+
+    /**
+     * Ventes journalières (contrat 1.14), lues par la rentabilité du Core et par salary-report.
+     */
+    public function salesProviders(): array
+    {
+        return [Container::getInstance()->make(DailyReportSales::class)];
     }
 }

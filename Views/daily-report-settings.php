@@ -63,7 +63,12 @@ $noReportTime      = $settings['no_report_time']     ?? '18:00';
         <div class="card-body">
             <p class="form-hint">
                 <?= __('dr_setting_permissions_hint') ?>
-                <a href="<?= route_url('admin.roles') ?>"><?= __('roles') ?></a>
+                <?php // La page des rôles est réservée à l'Owner : un lien y menait les gérants vers une page 403. ?>
+                <?php if (!empty($auth_user['is_admin'])): ?>
+                    <a href="<?= route_url('admin.roles') ?>"><?= __('roles') ?></a>
+                <?php else: ?>
+                    <?= __('roles') ?>
+                <?php endif; ?>
             </p>
         </div>
     </div>

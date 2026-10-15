@@ -1,5 +1,5 @@
 <?php
-use kintai\UI\Components\Badge;
+use kintai\Contract\View\Components\Badge;
 
 /**
  * @var array  $store
@@ -9,7 +9,7 @@ use kintai\UI\Components\Badge;
  * @var array  $settings
  * @var array  $authUser
  * @var array|null $membership
- * @var \kintai\Core\Services\DailyReportPermissionService $permissions
+ * @var \kintai\Bundles\Installed\DailyReport\Services\DailyReportPermissionService $permissions
  * @var bool   $canEdit
  * @var bool   $canSubmit
  * @var bool   $canValidate

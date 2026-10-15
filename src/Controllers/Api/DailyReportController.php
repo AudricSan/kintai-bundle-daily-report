@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\DailyReport\Controllers\Api;
 
-use kintai\Core\Api\Paginator;
-use kintai\Core\Exceptions\NotFoundException;
-use kintai\Core\Repositories\DailyReportRepositoryInterface;
-use kintai\Core\Repositories\StoreRepositoryInterface;
-use kintai\Core\Repositories\StoreUserRepositoryInterface;
-use kintai\Core\Request;
-use kintai\Core\Response;
-use kintai\Core\Services\DailyReportPermissionService;
+use kintai\Contract\Http\Paginator;
+use kintai\Contract\Exceptions\NotFoundException;
+use kintai\Bundles\Installed\DailyReport\Repositories\DailyReportRepositoryInterface;
+use kintai\Contract\Data\StoreRepositoryInterface;
+use kintai\Contract\Data\StoreUserRepositoryInterface;
+use kintai\Contract\Http\Request;
+use kintai\Contract\Http\Response;
+use kintai\Bundles\Installed\DailyReport\Services\DailyReportPermissionService;
 
 /**
  * Régression (audit du 03/10/2026) : store() et update() fusionnaient le JSON brut du client. Un `id`

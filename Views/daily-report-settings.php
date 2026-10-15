@@ -24,7 +24,7 @@ $noReportTime      = $settings['no_report_time']     ?? '18:00';
     </div>
 </div>
 
-<?= \kintai\UI\Components\Flash::fromQuery('success', [])->render() ?>
+<?= \kintai\Contract\View\Components\Flash::fromQuery('success', [])->render() ?>
 
 <?php if (!empty($errors)): ?>
     <div class="alert alert--danger mb-sm">

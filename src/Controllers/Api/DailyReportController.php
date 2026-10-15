@@ -61,7 +61,35 @@ final class DailyReportController
             $items = $this->reports->findAllActive();
         }
 
-        return Response::json(Paginator::paginate($items, $page, $limit));
+        return Response::json(Paginator::paginate($this->visibleTo($request, $items), $page, $limit));
+    }
+
+    /**
+     * Ne garde que les rapports que l'appelant peut ouvrir un par un (même règle que show()) : sans store_id, ou avec
+     * author_id, la liste renvoyait les rapports de TOUS les magasins (ventes, coût salarial) à n'importe quel compte
+     * ayant daily_reports.view dans un seul magasin, et un simple membre voyait ceux de ses collègues.
+     *
+     * @param array<int, array<string, mixed>> $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function visibleTo(Request $request, array $items): array
+    {
+        $authUser = $request->getAttribute('auth_user') ?? [];
+        $userId   = (int) ($authUser['id'] ?? 0);
+        $contexts = [];
+
+        return array_values(array_filter($items, function (array $report) use ($authUser, $userId, &$contexts): bool {
+            $storeId = (int) ($report['store_id'] ?? 0);
+            if (!array_key_exists($storeId, $contexts)) {
+                $store = $this->stores->findById($storeId);
+                $contexts[$storeId] = $store === null ? null : [$store, $this->storeUsers->findMembership($storeId, $userId)];
+            }
+            if ($contexts[$storeId] === null) {
+                return false;
+            }
+            [$store, $membership] = $contexts[$storeId];
+            return $this->permissions->canViewReport($authUser, $store, $report, $membership);
+        }));
     }
 
     /** GET /api/v1/daily-reports/{id} */

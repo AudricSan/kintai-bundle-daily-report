@@ -93,7 +93,6 @@ if ($canCreate && ($settings['enabled'] ?? true) && $_currentTime >= $_reminderT
 <div class="card mb-sm">
     <div class="card-body">
         <form method="GET" action="" class="form-flex">
-            <?= csrf_field() ?>
             <div class="form-group">
                 <label class="form-label"><?= __('status') ?></label>
                 <select name="status" class="form-control form-control-sm" data-submit-on-change>

@@ -83,3 +83,16 @@ jobs:
             echo "::error::Inline handlers, javascript: URLs and <script> without nonce are blocked by Kintai's CSP. Use data-on-click / data-confirm / data-submit-on-change, and <script nonce=\"...\">."
             exit 1
           fi
+      - name: No inline styles (Kintai CSP)
+        working-directory: KintaiBundleDev/kintai-bundle-daily-report
+        run: |
+          set -euo pipefail
+          # Les vues seulement : les gabarits d'e-mail (src/Services) ne passent pas par la CSP et gardent leurs styles en ligne.
+          if [ ! -d Views ]; then
+            echo "::error::Views/ not found in $(pwd)"
+            exit 1
+          fi
+          if grep -rnE "[[:space:]]style[[:space:]]*=[[:space:]]*[\"'\\\\]|<style>" Views; then
+            echo "::error::style=\"...\" attributes and <style> without nonce will be blocked by Kintai's CSP. Use a CSS class, style_class([...]) for a dynamic value (contract 1.22), and <style nonce=\"<?= csp_nonce() ?>\">."
+            exit 1
+          fi

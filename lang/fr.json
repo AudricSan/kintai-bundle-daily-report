@@ -1,4 +1,5 @@
 {
+    "cron_job_auto_validate": "Validation automatique des rapports journaliers",
     "audit_cron_auto_validated": "Validation auto (cron)",
     "audit_daily_report_created": "Rapport journalier créé",
     "audit_daily_report_deleted": "Rapport journalier supprimé",

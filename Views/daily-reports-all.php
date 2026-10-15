@@ -97,7 +97,6 @@ unset($months, $days);
 <!-- ===== FILTRE V1 (complet) ===== -->
 <div id="dr-filter-v1" class="card card--filters mb-sm">
     <form method="GET" action="" class="filter-bar">
-        <?= csrf_field() ?>
         <div class="shifts-filters__row">
             <div class="shifts-filters__group">
                 <label class="shifts-filters__label" for="dr-store"><?= __('store') ?></label>
@@ -149,7 +148,6 @@ unset($months, $days);
 <!-- ===== FILTRE V2 (année seulement) ===== -->
 <div id="dr-filter-v2" class="card card--filters mb-sm">
     <form method="GET" action="" class="filter-bar">
-        <?= csrf_field() ?>
         <div class="shifts-filters__row">
             <div class="shifts-filters__group">
                 <label class="shifts-filters__label" for="dr-year-v2"><?= __('dr_filter_year') ?></label>

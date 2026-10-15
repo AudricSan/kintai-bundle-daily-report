@@ -14,6 +14,7 @@ use kintai\Core\Repositories\StoreRepositoryInterface;
 use kintai\Core\Repositories\StoreUserRepositoryInterface;
 use kintai\Core\Request;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -22,11 +23,11 @@ use PHPUnit\Framework\TestCase;
  */
 final class DailyReportIndexScopeTest extends TestCase
 {
-    private DailyReportRepositoryInterface&MockObject $reports;
-    private StoreUserRepositoryInterface&MockObject $storeUsers;
-    private RoleAssignmentRepositoryInterface&MockObject $assignments;
-    private RoleRepositoryInterface&MockObject $roles;
-    private DailyReportController $controller;
+    private DailyReportRepositoryInterface&Stub $reports;
+    private StoreUserRepositoryInterface&Stub $storeUsers;
+    private RoleAssignmentRepositoryInterface&Stub $assignments;
+    private RoleRepositoryInterface&Stub $roles;
+    private ?DailyReportController $controller = null;
 
     private const REPORTS = [
         ['id' => 1, 'store_id' => 1, 'author_id' => 10, 'status' => 'submitted'],
@@ -36,34 +37,43 @@ final class DailyReportIndexScopeTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->reports     = $this->createMock(DailyReportRepositoryInterface::class);
-        $stores            = $this->createMock(StoreRepositoryInterface::class);
-        $this->storeUsers  = $this->createMock(StoreUserRepositoryInterface::class);
-        $this->assignments = $this->createMock(RoleAssignmentRepositoryInterface::class);
-        $this->roles       = $this->createMock(RoleRepositoryInterface::class);
+        $this->reports     = $this->createStub(DailyReportRepositoryInterface::class);
+        
+        $this->storeUsers  = $this->createStub(StoreUserRepositoryInterface::class);
+        $this->assignments = $this->createStub(RoleAssignmentRepositoryInterface::class);
+        $this->roles       = $this->createStub(RoleRepositoryInterface::class);
 
-        $stores->method('findById')->willReturnCallback(fn(int $id) => in_array($id, [1, 2], true) ? ['id' => $id] : null);
         $this->reports->method('findAllActive')->willReturn(self::REPORTS);
         $this->reports->method('findByAuthor')->willReturnCallback(
             fn(int $a) => array_values(array_filter(self::REPORTS, fn($r) => $r['author_id'] === $a))
         );
+    }
 
-        $this->controller = new DailyReportController(
-            $this->reports,
-            $stores,
-            $this->storeUsers,
-            new DailyReportPermissionService(new PermissionService($this->assignments, $this->roles)),
-        );
+    /** Objet testé, construit à la première utilisation : un test peut d'abord remplacer un bouchon par un mock. */
+    private function controller(): DailyReportController
+    {
+        if ($this->controller === null) {
+            $stores            = $this->createStub(StoreRepositoryInterface::class);
+            $stores->method('findById')->willReturnCallback(fn(int $id) => in_array($id, [1, 2], true) ? ['id' => $id] : null);
+            $this->controller = new DailyReportController(
+                $this->reports,
+                $stores,
+                $this->storeUsers,
+                new DailyReportPermissionService(new PermissionService($this->assignments, $this->roles)),
+            );
+        }
+
+        return $this->controller;
     }
 
     /** Rôle de magasin portant la permission de lecture sur le seul magasin $storeId. */
     private function managerOf(int $userId, int $storeId): void
     {
-        $this->assignments->method('findByUser')->with($userId)->willReturn([
+        $this->assignments->method('findByUser')->willReturnCallback(fn($a0) => $a0 === $userId ? [
             ['id' => 1, 'user_id' => $userId, 'role_id' => 5, 'scope_type' => 'store', 'scope_id' => $storeId],
-        ]);
-        $this->roles->method('findById')->with(5)->willReturn(['id' => 5, 'is_system' => 0]);
-        $this->roles->method('getPermissions')->with(5)->willReturn(['daily_reports.view']);
+        ] : []);
+        $this->roles->method('findById')->willReturnCallback(fn($a0) => $a0 === 5 ? ['id' => 5, 'is_system' => 0] : null);
+        $this->roles->method('getPermissions')->willReturnCallback(fn($a0) => $a0 === 5 ? ['daily_reports.view'] : []);
         $this->storeUsers->method('findMembership')->willReturnCallback(
             fn(int $s, int $u) => $s === $storeId ? ['store_id' => $s, 'user_id' => $u] : null
         );
@@ -76,7 +86,7 @@ final class DailyReportIndexScopeTest extends TestCase
         $req = new Request();
         $_GET = [];
         $req->setAttribute('auth_user', ['id' => $userId]);
-        $body = json_decode($this->controller->index($req)->body(), true);
+        $body = json_decode($this->controller()->index($req)->body(), true);
         return array_map(fn($r) => (int) $r['id'], $body['data']);
     }
 

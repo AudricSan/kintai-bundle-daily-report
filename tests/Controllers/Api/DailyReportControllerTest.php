@@ -16,6 +16,7 @@ use kintai\Core\Repositories\StoreUserRepositoryInterface;
 use kintai\Core\Request;
 use kintai\Bundles\Installed\DailyReport\Services\DailyReportPermissionService;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -28,29 +29,37 @@ use PHPUnit\Framework\TestCase;
  */
 final class DailyReportControllerTest extends TestCase
 {
-    private DailyReportRepositoryInterface&MockObject $reports;
-    private StoreRepositoryInterface&MockObject $stores;
-    private StoreUserRepositoryInterface&MockObject $storeUsers;
-    private RoleAssignmentRepositoryInterface&MockObject $assignments;
-    private RoleRepositoryInterface&MockObject $roles;
-    private DailyReportController $controller;
+    private DailyReportRepositoryInterface&Stub $reports;
+    private StoreRepositoryInterface&Stub $stores;
+    private StoreUserRepositoryInterface&Stub $storeUsers;
+    private RoleAssignmentRepositoryInterface&Stub $assignments;
+    private RoleRepositoryInterface&Stub $roles;
+    private ?DailyReportController $controller = null;
 
     protected function setUp(): void
     {
-        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
-        $this->stores = $this->createMock(StoreRepositoryInterface::class);
-        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
-        $this->assignments = $this->createMock(RoleAssignmentRepositoryInterface::class);
-        $this->roles = $this->createMock(RoleRepositoryInterface::class);
+        $this->reports = $this->createStub(DailyReportRepositoryInterface::class);
+        $this->stores = $this->createStub(StoreRepositoryInterface::class);
+        $this->storeUsers = $this->createStub(StoreUserRepositoryInterface::class);
+        $this->assignments = $this->createStub(RoleAssignmentRepositoryInterface::class);
+        $this->roles = $this->createStub(RoleRepositoryInterface::class);
 
-        $this->controller = new DailyReportController(
-            $this->reports,
-            $this->stores,
-            $this->storeUsers,
-            new DailyReportPermissionService(new PermissionService($this->assignments, $this->roles)),
-        );
+        $this->stores->method('findById')->willReturnCallback(fn($a0) => $a0 === 1 ? ['id' => 1, 'name' => 'Store A'] : null);
+    }
 
-        $this->stores->method('findById')->with(1)->willReturn(['id' => 1, 'name' => 'Store A']);
+    /** Objet testé, construit à la première utilisation : un test peut d'abord remplacer un bouchon par un mock. */
+    private function controller(): DailyReportController
+    {
+        if ($this->controller === null) {
+            $this->controller = new DailyReportController(
+                $this->reports,
+                $this->stores,
+                $this->storeUsers,
+                new DailyReportPermissionService(new PermissionService($this->assignments, $this->roles)),
+            );
+        }
+
+        return $this->controller;
     }
 
     private function requestWithJson(array $json, array $routeParams = [], array $authUser = ['id' => 20]): Request
@@ -71,11 +80,11 @@ final class DailyReportControllerTest extends TestCase
 
     private function grant(string $key, int $userId = 20, int $storeId = 1): void
     {
-        $this->assignments->method('findByUser')->with($userId)->willReturn([
+        $this->assignments->method('findByUser')->willReturnCallback(fn($a0) => $a0 === $userId ? [
             ['id' => 1, 'user_id' => $userId, 'role_id' => 5, 'scope_type' => 'store', 'scope_id' => $storeId],
-        ]);
-        $this->roles->method('findById')->with(5)->willReturn(['id' => 5, 'is_system' => 0]);
-        $this->roles->method('getPermissions')->with(5)->willReturn([$key]);
+        ] : []);
+        $this->roles->method('findById')->willReturnCallback(fn($a0) => $a0 === 5 ? ['id' => 5, 'is_system' => 0] : null);
+        $this->roles->method('getPermissions')->willReturnCallback(fn($a0) => $a0 === 5 ? [$key] : []);
     }
 
     // -------------------------------------------------------------------------
@@ -84,45 +93,51 @@ final class DailyReportControllerTest extends TestCase
 
     public function testMemberCannotUpdateColleaguesSubmittedReport(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
         $this->noPermissions();
-        $this->reports->method('findById')->with(42)->willReturn([
+        $this->reports->expects($this->atLeastOnce())->method('findById')->with(42)->willReturn([
             'id' => 42, 'store_id' => 1, 'author_id' => 99, 'status' => 'submitted',
         ]);
-        $this->storeUsers->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
         $this->reports->expects($this->never())->method('save');
 
         $req = $this->requestWithJson(['sales_total' => 100], ['id' => '42']);
-        $response = $this->controller->update($req);
+        $response = $this->controller()->update($req);
 
         $this->assertSame(403, $response->status());
     }
 
     public function testMemberCanUpdateOwnDraftReport(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
         $this->noPermissions();
-        $this->reports->method('findById')->with(42)->willReturn([
+        $this->reports->expects($this->atLeastOnce())->method('findById')->with(42)->willReturn([
             'id' => 42, 'store_id' => 1, 'author_id' => 20, 'status' => 'draft',
         ]);
-        $this->storeUsers->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
         $this->reports->expects($this->once())->method('save')->willReturnCallback(fn(array $d) => $d);
 
         $req = $this->requestWithJson(['sales_total' => 100], ['id' => '42']);
-        $response = $this->controller->update($req);
+        $response = $this->controller()->update($req);
 
         $this->assertSame(200, $response->status());
     }
 
     public function testManagerWithPermissionCanUpdateAnyReportInStore(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
         $this->grant('daily_reports.update');
-        $this->reports->method('findById')->with(42)->willReturn([
+        $this->reports->expects($this->atLeastOnce())->method('findById')->with(42)->willReturn([
             'id' => 42, 'store_id' => 1, 'author_id' => 99, 'status' => 'submitted',
         ]);
-        $this->storeUsers->method('findMembership')->with(1, 20)->willReturn(null);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findMembership')->with(1, 20)->willReturn(null);
         $this->reports->expects($this->once())->method('save')->willReturnCallback(fn(array $d) => $d);
 
         $req = $this->requestWithJson(['sales_total' => 100], ['id' => '42']);
-        $response = $this->controller->update($req);
+        $response = $this->controller()->update($req);
 
         $this->assertSame(200, $response->status());
     }
@@ -133,30 +148,34 @@ final class DailyReportControllerTest extends TestCase
 
     public function testMemberCannotDeleteOwnDraftWithoutDeletePermission(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
         $this->noPermissions();
-        $this->reports->method('findById')->with(42)->willReturn([
+        $this->reports->expects($this->atLeastOnce())->method('findById')->with(42)->willReturn([
             'id' => 42, 'store_id' => 1, 'author_id' => 20, 'status' => 'draft', 'deleted_at' => null,
         ]);
-        $this->storeUsers->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
         $this->reports->expects($this->never())->method('delete');
 
         $req = $this->requestWithJson([], ['id' => '42']);
-        $response = $this->controller->destroy($req);
+        $response = $this->controller()->destroy($req);
 
         $this->assertSame(403, $response->status());
     }
 
     public function testManagerWithDeletePermissionCanDelete(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
         $this->grant('daily_reports.delete');
-        $this->reports->method('findById')->with(42)->willReturn([
+        $this->reports->expects($this->atLeastOnce())->method('findById')->with(42)->willReturn([
             'id' => 42, 'store_id' => 1, 'author_id' => 99, 'status' => 'submitted', 'deleted_at' => null,
         ]);
-        $this->storeUsers->method('findMembership')->with(1, 20)->willReturn(null);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findMembership')->with(1, 20)->willReturn(null);
         $this->reports->expects($this->once())->method('delete')->with(42);
 
         $req = $this->requestWithJson([], ['id' => '42']);
-        $response = $this->controller->destroy($req);
+        $response = $this->controller()->destroy($req);
 
         $this->assertSame(204, $response->status());
     }
@@ -168,15 +187,17 @@ final class DailyReportControllerTest extends TestCase
 
     public function testManagerWithApprovePermissionCanValidateAnySubmittedReport(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
         $this->grant('daily_reports.approve');
-        $this->reports->method('findById')->with(42)->willReturn([
+        $this->reports->expects($this->atLeastOnce())->method('findById')->with(42)->willReturn([
             'id' => 42, 'store_id' => 1, 'author_id' => 99, 'status' => 'submitted',
         ]);
-        $this->storeUsers->method('findMembership')->with(1, 20)->willReturn(null);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findMembership')->with(1, 20)->willReturn(null);
         $this->reports->expects($this->once())->method('save')->willReturnCallback(fn(array $d) => $d);
 
         $req = $this->requestWithJson([], ['id' => '42']);
-        $response = $this->controller->validate($req);
+        $response = $this->controller()->validate($req);
 
         $this->assertSame(200, $response->status());
         $body = json_decode($response->body(), true);
@@ -185,15 +206,17 @@ final class DailyReportControllerTest extends TestCase
 
     public function testMemberWithoutApprovePermissionCannotValidate(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
         $this->noPermissions();
-        $this->reports->method('findById')->with(42)->willReturn([
+        $this->reports->expects($this->atLeastOnce())->method('findById')->with(42)->willReturn([
             'id' => 42, 'store_id' => 1, 'author_id' => 20, 'status' => 'submitted',
         ]);
-        $this->storeUsers->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
         $this->reports->expects($this->never())->method('save');
 
         $req = $this->requestWithJson([], ['id' => '42']);
-        $response = $this->controller->validate($req);
+        $response = $this->controller()->validate($req);
 
         $this->assertSame(403, $response->status());
     }
@@ -204,39 +227,44 @@ final class DailyReportControllerTest extends TestCase
 
     public function testMemberCannotViewColleaguesReportWithoutPermission(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
         $this->noPermissions();
-        $this->reports->method('findById')->with(42)->willReturn([
+        $this->reports->expects($this->atLeastOnce())->method('findById')->with(42)->willReturn([
             'id' => 42, 'store_id' => 1, 'author_id' => 99, 'status' => 'submitted',
         ]);
-        $this->storeUsers->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
 
         $req = $this->requestWithJson([], ['id' => '42']);
-        $response = $this->controller->show($req);
+        $response = $this->controller()->show($req);
 
         $this->assertSame(403, $response->status());
     }
 
     public function testMemberCanViewOwnReport(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
         $this->noPermissions();
-        $this->reports->method('findById')->with(42)->willReturn([
+        $this->reports->expects($this->atLeastOnce())->method('findById')->with(42)->willReturn([
             'id' => 42, 'store_id' => 1, 'author_id' => 20, 'status' => 'submitted',
         ]);
-        $this->storeUsers->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
 
         $req = $this->requestWithJson([], ['id' => '42']);
-        $response = $this->controller->show($req);
+        $response = $this->controller()->show($req);
 
         $this->assertSame(200, $response->status());
     }
 
     public function testShowThrowsNotFoundForMissingReport(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
         $this->noPermissions();
-        $this->reports->method('findById')->with(999)->willReturn(null);
+        $this->reports->expects($this->atLeastOnce())->method('findById')->with(999)->willReturn(null);
 
         $this->expectException(NotFoundException::class);
-        $this->controller->show($this->requestWithJson([], ['id' => '999']));
+        $this->controller()->show($this->requestWithJson([], ['id' => '999']));
     }
 
     // -------------------------------------------------------------------------
@@ -245,12 +273,14 @@ final class DailyReportControllerTest extends TestCase
 
     public function testNonMemberCannotCreateReport(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
         $this->noPermissions();
-        $this->storeUsers->method('findMembership')->with(1, 20)->willReturn(null);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findMembership')->with(1, 20)->willReturn(null);
         $this->reports->expects($this->never())->method('save');
 
         $req = $this->requestWithJson(['store_id' => 1, 'report_date' => '2026-08-05']);
-        $response = $this->controller->store($req);
+        $response = $this->controller()->store($req);
 
         $this->assertSame(403, $response->status());
     }
@@ -262,12 +292,14 @@ final class DailyReportControllerTest extends TestCase
      */
     public function testStoreMemberWithoutCreatePermissionCannotCreateReport(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
         $this->noPermissions();
-        $this->storeUsers->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
         $this->reports->expects($this->never())->method('save');
 
         $req = $this->requestWithJson(['store_id' => 1, 'report_date' => '2026-08-05']);
-        $response = $this->controller->store($req);
+        $response = $this->controller()->store($req);
 
         $this->assertSame(403, $response->status());
     }
@@ -275,12 +307,14 @@ final class DailyReportControllerTest extends TestCase
     /** daily_reports.create accordé seul (ex. à un employé spécifique) suffit à créer. */
     public function testMemberWithCreatePermissionCanCreateOwnReport(): void
     {
+        $this->reports = $this->createMock(DailyReportRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
         $this->grant('daily_reports.create');
-        $this->storeUsers->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findMembership')->with(1, 20)->willReturn(['store_id' => 1, 'user_id' => 20]);
         $this->reports->expects($this->once())->method('save')->willReturnCallback(fn(array $d) => $d + ['id' => 55]);
 
         $req = $this->requestWithJson(['store_id' => 1, 'report_date' => '2026-08-05']);
-        $response = $this->controller->store($req);
+        $response = $this->controller()->store($req);
 
         $this->assertSame(201, $response->status());
         $body = json_decode($response->body(), true);

@@ -6,6 +6,7 @@ namespace kintai\Tests\Bundles\DailyReport\Services;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use kintai\Bundles\Installed\DailyReport\Services\DailyReportPdfService;
 use kintai\Core\Services\TranslationService;
 use kintai\Core\Repositories\LanguageRepositoryInterface;
@@ -17,27 +18,35 @@ use kintai\UI\ViewRenderer;
 
 final class DailyReportPdfServiceTest extends TestCase
 {
-    private DailyReportPdfService $service;
-    private ShiftRepositoryInterface&MockObject $shifts;
-    private ShiftTypeRepositoryInterface&MockObject $shiftTypes;
-    private UserRepositoryInterface&MockObject $users;
+    private ?DailyReportPdfService $service = null;
+    private ShiftRepositoryInterface&Stub $shifts;
+    private ShiftTypeRepositoryInterface&Stub $shiftTypes;
+    private UserRepositoryInterface&Stub $users;
 
     protected function setUp(): void
     {
-        $this->shifts     = $this->createMock(ShiftRepositoryInterface::class);
-        $this->shiftTypes = $this->createMock(ShiftTypeRepositoryInterface::class);
-        $this->users      = $this->createMock(UserRepositoryInterface::class);
+        $this->shifts     = $this->createStub(ShiftRepositoryInterface::class);
+        $this->shiftTypes = $this->createStub(ShiftTypeRepositoryInterface::class);
+        $this->users      = $this->createStub(UserRepositoryInterface::class);
+    }
 
-        $this->service = new DailyReportPdfService(
-            new ViewRenderer('/nonexistent/views'),
-            new TranslationService(
-                $this->createStub(TranslationRepositoryInterface::class),
-                $this->createStub(LanguageRepositoryInterface::class),
-            ),
-            $this->shifts,
-            $this->shiftTypes,
-            $this->users,
-        );
+    /** Objet testé, construit à la première utilisation : un test peut d'abord remplacer un bouchon par un mock. */
+    private function service(): DailyReportPdfService
+    {
+        if ($this->service === null) {
+            $this->service = new DailyReportPdfService(
+                new ViewRenderer('/nonexistent/views'),
+                new TranslationService(
+                    $this->createStub(TranslationRepositoryInterface::class),
+                    $this->createStub(LanguageRepositoryInterface::class),
+                ),
+                $this->shifts,
+                $this->shiftTypes,
+                $this->users,
+            );
+        }
+
+        return $this->service;
     }
 
     // -------------------------------------------------------------------------
@@ -72,14 +81,14 @@ final class DailyReportPdfServiceTest extends TestCase
     {
         $ref = new \ReflectionMethod(DailyReportPdfService::class, 'buildShiftRows');
         $ref->setAccessible(true);
-        return $ref->invoke($this->service, $store, $report);
+        return $ref->invoke($this->service(), $store, $report);
     }
 
     private function invokeResolveLocale(array $author, array $store, ?string $override = null): string
     {
         $ref = new \ReflectionMethod(DailyReportPdfService::class, 'resolveLocale');
         $ref->setAccessible(true);
-        return $ref->invoke($this->service, $author, $store, $override);
+        return $ref->invoke($this->service(), $author, $store, $override);
     }
 
     // -------------------------------------------------------------------------
@@ -91,7 +100,7 @@ final class DailyReportPdfServiceTest extends TestCase
         $this->shifts->method('findByDate')->willReturn([]);
         $this->shiftTypes->method('findByStore')->willReturn([]);
 
-        $result = $this->service->generateBytes($this->report(), $this->store());
+        $result = $this->service()->generateBytes($this->report(), $this->store());
         $this->assertNull($result);
     }
 
@@ -100,7 +109,7 @@ final class DailyReportPdfServiceTest extends TestCase
         $this->shifts->method('findByDate')->willReturn([]);
         $this->shiftTypes->method('findByStore')->willReturn([]);
 
-        $result = $this->service->generateBytes($this->report(), $this->store(), [], 'en');
+        $result = $this->service()->generateBytes($this->report(), $this->store(), [], 'en');
         $this->assertNull($result);
     }
 
@@ -109,7 +118,7 @@ final class DailyReportPdfServiceTest extends TestCase
         $this->shifts->method('findByDate')->willReturn([]);
         $this->shiftTypes->method('findByStore')->willReturn([]);
 
-        $result = $this->service->generateBytes($this->report(), $this->store(), [], 'ja');
+        $result = $this->service()->generateBytes($this->report(), $this->store(), [], 'ja');
         $this->assertNull($result);
     }
 
@@ -126,6 +135,7 @@ final class DailyReportPdfServiceTest extends TestCase
 
     public function testBuildShiftRowsDoesNotQueryRepositoriesForEmptyDate(): void
     {
+        $this->shifts = $this->createMock(ShiftRepositoryInterface::class);
         $this->shifts->expects($this->never())->method('findByDate');
 
         $report = ['id' => 1, 'report_date' => ''];
@@ -382,6 +392,7 @@ final class DailyReportPdfServiceTest extends TestCase
 
     public function testBuildShiftRowsCachesUserLookupForSameUser(): void
     {
+        $this->users = $this->createMock(UserRepositoryInterface::class);
         $this->shifts->method('findByDate')->willReturn([
             $this->shift(10, '08:00', '12:00', 240),
             $this->shift(10, '13:00', '17:00', 240),
@@ -399,6 +410,7 @@ final class DailyReportPdfServiceTest extends TestCase
 
     public function testBuildShiftRowsQueriesEachDistinctUserOnce(): void
     {
+        $this->users = $this->createMock(UserRepositoryInterface::class);
         $this->shifts->method('findByDate')->willReturn([
             $this->shift(10, '08:00', '12:00', 240),
             $this->shift(20, '09:00', '17:00', 480),

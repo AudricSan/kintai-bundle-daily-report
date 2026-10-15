@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace kintai\Tests\Bundles\DailyReport\Cron;
 
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\MockObject\MockObject;
 use kintai\Core\Auth\PermissionService;
 use kintai\Bundles\Installed\DailyReport\Cron\AutoValidateJob;
 use kintai\Core\Mail\MailerService;
@@ -33,13 +32,13 @@ final class AutoValidateJobTest extends TestCase
 
     protected function setUp(): void
     {
-        $stores  = $this->createMock(StoreRepositoryInterface::class);
+        $stores  = $this->createStub(StoreRepositoryInterface::class);
         $stores->method('findActive')->willReturn([]);
-        $reports = $this->createMock(DailyReportRepositoryInterface::class);
-        $users   = $this->createMock(UserRepositoryInterface::class);
+        $reports = $this->createStub(DailyReportRepositoryInterface::class);
+        $users   = $this->createStub(UserRepositoryInterface::class);
 
-        $shifts     = $this->createMock(ShiftRepositoryInterface::class);
-        $shiftTypes = $this->createMock(ShiftTypeRepositoryInterface::class);
+        $shifts     = $this->createStub(ShiftRepositoryInterface::class);
+        $shiftTypes = $this->createStub(ShiftTypeRepositoryInterface::class);
         $pdfService = new DailyReportPdfService(
             new ViewRenderer(dirname(__DIR__, 2) . '/Views'),
             new TranslationService(

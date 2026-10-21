@@ -229,7 +229,7 @@ final class DailyReportControllerTest extends TestCase
         $this->stores = $this->createStub(StoreRepositoryInterface::class);
         $this->stores->method('findById')->willReturn(['id' => 1, 'name' => 'Store A']);
         $this->reports->method('findById')->willReturn([
-            'id' => 10, 'store_id' => 1, 'status' => 'submitted', 'author_id' => 9, 'validated_by' => null, 'report_date' => '2026-08-05',
+            'id' => 10, 'store_id' => 1, 'status' => 'submitted', 'author_id' => 9, 'validated_by' => null, 'deleted_at' => null, 'report_date' => '2026-08-05',
         ]);
         $this->assignments->method('findByUser')->willReturn([
             ['id' => 1, 'user_id' => 20, 'role_id' => 2, 'scope_type' => 'store', 'scope_id' => 1],

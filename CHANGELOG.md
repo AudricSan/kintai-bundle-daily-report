@@ -10,6 +10,8 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ### Changed
 
+- Notifications (contrat 1.23, `kintai_contract` `^1.23`) : types `daily_report_submitted` et `daily_report_validated` déclarés au format enrichi (catégorie « reports », push par défaut, `reference_type` `daily_report`) ; le lien ouvrait déjà le rapport précis, l'ouvrir marque maintenant ses notifications comme lues.
+
 - Tests : plus aucun avis PHPUnit (55 auparavant) — les doublures sans attente sont des bouchons (`createStub()`), les mocks ne sont créés que dans les tests qui posent une attente, et les vérifications `->with()` sont conservées (`expects($this->atLeastOnce())`, ou `willReturnCallback()` par argument dans les méthodes utilitaires).
 - Aperçu PDF du rapport journalier : le bloc `<style>` porte le nonce CSP de la requête, en vue du retrait de `'unsafe-inline'` des styles dans la CSP de Kintai. Contrôle CI ajouté contre les styles en ligne dans les vues.
 - Test `DailyReportMassAssignmentTest` repris du Core (affectation de masse à la création par l'API : identifiant ignoré, auteur et brouillon imposés, validation refusée), retiré du Core avec l'extraction. Aucun changement fonctionnel.

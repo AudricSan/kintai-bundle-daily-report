@@ -399,6 +399,9 @@ final class DailyReportController
             throw new ForbiddenException(__('error_daily_report_access_denied'));
         }
 
+        // Le rapport est ouvert par quelqu'un qui a le droit de le voir : ses notifications sont lues.
+        $this->notifs->markReadFor((int) $authUser['id'], 'daily_report', $reportId);
+
         $author   = $this->users->findById((int) $report['author_id']);
         $validator = $report['validated_by'] ? $this->users->findById((int) $report['validated_by']) : null;
         $settings  = $this->permissions->getSettings($store);

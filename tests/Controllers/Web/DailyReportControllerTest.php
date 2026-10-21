@@ -217,6 +217,64 @@ final class DailyReportControllerTest extends TestCase
         $this->controller()->validate($req);
     }
 
+    /** Ouvrir un rapport qu'on a le droit de voir marque ses notifications comme lues. */
+    public function testShowMarksTheReportNotificationsAsRead(): void
+    {
+        $this->storeUsers = $this->createStub(StoreUserRepositoryInterface::class);
+        $this->storeUsers->method('findMembership')->willReturn(['store_id' => 1, 'user_id' => 20]);
+        $this->notifs = $this->createMock(NotificationService::class);
+        $this->assignments = $this->createStub(RoleAssignmentRepositoryInterface::class);
+        $this->roles = $this->createStub(RoleRepositoryInterface::class);
+        $this->reports = $this->createStub(DailyReportRepositoryInterface::class);
+        $this->stores = $this->createStub(StoreRepositoryInterface::class);
+        $this->stores->method('findById')->willReturn(['id' => 1, 'name' => 'Store A']);
+        $this->reports->method('findById')->willReturn([
+            'id' => 10, 'store_id' => 1, 'status' => 'submitted', 'author_id' => 9, 'validated_by' => null, 'deleted_at' => null, 'report_date' => '2026-08-05',
+        ]);
+        $this->assignments->method('findByUser')->willReturn([
+            ['id' => 1, 'user_id' => 20, 'role_id' => 2, 'scope_type' => 'store', 'scope_id' => 1],
+        ]);
+        $this->roles->method('findById')->willReturn(['id' => 2, 'is_system' => 0]);
+        $this->roles->method('getPermissions')->willReturn(['daily_reports.view']);
+
+        $this->notifs->expects($this->once())->method('markReadFor')->with(20, 'daily_report', 10);
+
+        $req = new Request();
+        $req->setAttribute('auth_user', ['id' => 20]);
+        $req->setAttribute('managed_store_ids', null);
+        $req->setRouteParams(['id' => '1', 'rid' => '10']);
+
+        try {
+            $this->controller()->show($req);
+        } catch (\Throwable) {
+            // Le rendu de la vue n'est pas l'objet du test : « lu » est marqué avant.
+        }
+    }
+
+    /** Sans le droit de voir le rapport, rien n'est marqué lu. */
+    public function testShowByAUserWhoCannotSeeTheReportMarksNothing(): void
+    {
+        $this->storeUsers = $this->createStub(StoreUserRepositoryInterface::class);
+        $this->storeUsers->method('findMembership')->willReturn(['store_id' => 1, 'user_id' => 20]);
+        $this->notifs = $this->createMock(NotificationService::class);
+        $this->reports = $this->createStub(DailyReportRepositoryInterface::class);
+        $this->stores = $this->createStub(StoreRepositoryInterface::class);
+        $this->stores->method('findById')->willReturn(['id' => 1, 'name' => 'Store A']);
+        $this->reports->method('findById')->willReturn([
+            'id' => 10, 'store_id' => 1, 'status' => 'submitted', 'author_id' => 9, 'report_date' => '2026-08-05',
+        ]);
+
+        $this->notifs->expects($this->never())->method('markReadFor');
+
+        $req = new Request();
+        $req->setAttribute('auth_user', ['id' => 20]);
+        $req->setAttribute('managed_store_ids', null);
+        $req->setRouteParams(['id' => '1', 'rid' => '10']);
+
+        $this->expectException(\kintai\Core\Exceptions\ForbiddenException::class);
+        $this->controller()->show($req);
+    }
+
     public function testValidateBySelfDoesNotSelfNotify(): void
     {
         $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);

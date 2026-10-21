@@ -95,7 +95,17 @@ final class ContractDeclarationsTest extends TestCase
 
     public function testNotificationTypes(): void
     {
-        $this->assertSame(['daily_report_submitted' => '📝', 'daily_report_validated' => '✓'], $this->bundle()->notificationTypes());
+        $declared = $this->bundle()->notificationTypes();
+        $this->assertSame(['daily_report_submitted', 'daily_report_validated'], array_keys($declared));
+
+        // Chaque déclaration est valide pour le Core (format enrichi du contrat 1.23).
+        foreach ($declared as $type => $declaration) {
+            $parsed = \kintai\Contract\Extension\NotificationType::fromDeclaration($type, $declaration);
+            $this->assertSame('reports', $parsed->category);
+            $this->assertSame('daily_report', $parsed->referenceType);
+            $this->assertTrue($parsed->push);
+            $this->assertFalse($parsed->email);
+        }
     }
 
     public function testSalesProvider(): void

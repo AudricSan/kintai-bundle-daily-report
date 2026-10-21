@@ -177,11 +177,15 @@ final class DailyReportBundle extends Bundle
     }
 
     /**
-     * Types de notification (contrat 1.7) : rapport soumis (aux valideurs), rapport validé (à l'auteur).
+     * Types de notification : rapport soumis (aux valideurs), rapport validé (à l'auteur). Format enrichi (contrat 1.23) :
+     * catégorie « reports », push par défaut, pas d'e-mail ; l'identifiant passé à notify() est celui du rapport.
      */
     public function notificationTypes(): array
     {
-        return ['daily_report_submitted' => '📝', 'daily_report_validated' => '✓'];
+        return [
+            'daily_report_submitted' => ['icon' => '📝', 'category' => 'reports', 'channels' => ['push' => true, 'email' => false], 'reference_type' => 'daily_report'],
+            'daily_report_validated' => ['icon' => '✓', 'category' => 'reports', 'channels' => ['push' => true, 'email' => false], 'reference_type' => 'daily_report'],
+        ];
     }
 
     /**

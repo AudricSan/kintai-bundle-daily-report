@@ -98,6 +98,35 @@ $noReportTime      = $settings['no_report_time']     ?? '18:00';
         </div>
     </div>
 
+    <!-- ── Horaires : validation automatique et rappels ── -->
+    <div class="card card--mb">
+        <div class="card-header"><?= __('dr_setting_times') ?></div>
+        <div class="card-body form-stack">
+
+            <div class="form-group">
+                <label class="form-label" for="dr-auto-validate-time"><?= __('dr_setting_auto_validate_time') ?></label>
+                <input type="time" id="dr-auto-validate-time" name="auto_validate_time" class="form-control form-control-sm"
+                       value="<?= htmlspecialchars((string) $autoValidateTime) ?>">
+                <span class="form-hint"><?= __('dr_setting_auto_validate_time_hint') ?></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="dr-reminder-time"><?= __('dr_setting_reminder_time') ?></label>
+                <input type="time" id="dr-reminder-time" name="reminder_time" class="form-control form-control-sm"
+                       value="<?= htmlspecialchars((string) $reminderTime) ?>">
+                <span class="form-hint"><?= __('dr_setting_reminder_time_hint') ?></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="dr-no-report-time"><?= __('dr_setting_no_report_time') ?></label>
+                <input type="time" id="dr-no-report-time" name="no_report_time" class="form-control form-control-sm"
+                       value="<?= htmlspecialchars((string) $noReportTime) ?>">
+                <span class="form-hint"><?= __('dr_setting_no_report_time_hint') ?></span>
+            </div>
+
+        </div>
+    </div>
+
     <!-- ── Colonnes du planning ── -->
     <div class="card card--mb">
         <div class="card-header"><?= __('dr_setting_columns') ?></div>

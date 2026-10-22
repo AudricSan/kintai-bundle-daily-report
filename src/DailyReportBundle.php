@@ -103,12 +103,12 @@ final class DailyReportBundle extends Bundle
         // Avec la permission globale : un lien vers tous les rapports ; sinon, un lien par magasin où l'utilisateur
         // rédige les rapports ($daily_report_staff_stores, voir viewVariables()).
         return [
-            new NavItem('daily_reports', NavItem::REPORTS, 'daily_reports', 'admin.daily_reports.all', 'admin.daily_reports.all',
+            new NavItem('daily_reports', NavItem::REPORTS, 'daily_report_daily_reports', 'admin.daily_reports.all', 'admin.daily_reports.all',
                 icon: 'chart', storeFeature: 'daily_reports', order: 30, mobile: true,
                 links: static function (array $view, bool $isManager): array {
                     $path = (string) ($view['path'] ?? '');
                     if (($view['route_visible'])('admin.daily_reports.all')) {
-                        return [['href' => ($view['route_url'])('admin.daily_reports.all'), 'label' => __('daily_reports'), 'active' => str_contains($path, '/daily-reports')]];
+                        return [['href' => ($view['route_url'])('admin.daily_reports.all'), 'label' => __('daily_report_daily_reports'), 'active' => str_contains($path, '/daily-reports')]];
                     }
                     $stores = (array) ($view['daily_report_staff_stores'] ?? []);
                     $links = [];
@@ -116,7 +116,7 @@ final class DailyReportBundle extends Bundle
                         $id = (int) ($store['id'] ?? 0);
                         $links[] = [
                             'href'   => ($view['route_url'])('admin.stores') . '/' . $id . '/daily-reports',
-                            'label'  => __('daily_reports') . (count($stores) > 1 ? ' — ' . (string) ($store['name'] ?? '') : ''),
+                            'label'  => __('daily_report_daily_reports') . (count($stores) > 1 ? ' — ' . (string) ($store['name'] ?? '') : ''),
                             'active' => str_contains($path, '/stores/' . $id . '/daily-reports'),
                         ];
                     }
@@ -138,7 +138,7 @@ final class DailyReportBundle extends Bundle
      */
     public function storeFeatures(): array
     {
-        return [new StoreFeature('daily_reports', 'feature_daily_reports', 'feature_daily_reports_desc', '📊', 70)];
+        return [new StoreFeature('daily_reports', 'daily_report_feature_daily_reports', 'daily_report_feature_daily_reports_desc', '📊', 70)];
     }
 
     /**

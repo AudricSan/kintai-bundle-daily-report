@@ -48,7 +48,7 @@ final class DailyReportMailService
         try {
             $storeName  = $store['name'] ?? 'Kintai';
             $reportDate = $report['report_date'] ?? '';
-            $subject    = '[' . $storeName . '] ' . __('dr_title') . ' — ' . $reportDate;
+            $subject    = '[' . $storeName . '] ' . __('daily_report_title') . ' — ' . $reportDate;
             $body       = $this->buildBody($report, $store, $resolved);
         } finally {
             $this->translations->setLocale($previous);
@@ -95,13 +95,13 @@ final class DailyReportMailService
         $currency  = htmlspecialchars($store['currency'] ?? '¥');
 
         // Labels traduits (locale déjà appliquée par send() avant cet appel)
-        $lTitle     = htmlspecialchars(__('dr_title'));
+        $lTitle     = htmlspecialchars(__('daily_report_title'));
         $lDate      = htmlspecialchars(__('date'));
-        $lSales     = htmlspecialchars(__('dr_sales'));
-        $lCustomers = htmlspecialchars(__('dr_customers'));
-        $lLabor     = htmlspecialchars(__('dr_labor'));
-        $lWaste     = htmlspecialchars(__('dr_waste'));
-        $lNotes     = htmlspecialchars(__('dr_notes'));
+        $lSales     = htmlspecialchars(__('daily_report_sales'));
+        $lCustomers = htmlspecialchars(__('daily_report_customers'));
+        $lLabor     = htmlspecialchars(__('daily_report_labor'));
+        $lWaste     = htmlspecialchars(__('daily_report_waste'));
+        $lNotes     = htmlspecialchars(__('daily_report_notes'));
 
         return <<<HTML
         <!DOCTYPE html>

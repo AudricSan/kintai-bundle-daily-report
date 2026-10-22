@@ -35,7 +35,7 @@ final class ContractDeclarationsTest extends TestCase
         $this->assertInstanceOf(NavItem::class, $items[0]);
         $this->assertSame('daily_reports', $items[0]->key);
         $this->assertSame(NavItem::REPORTS, $items[0]->section);
-        $this->assertSame('daily_reports', $items[0]->label);
+        $this->assertSame('daily_report_daily_reports', $items[0]->label);
         $this->assertSame('admin.daily_reports.all', $items[0]->managerRoute);
         $this->assertSame('admin.daily_reports.all', $items[0]->employeeRoute);
         $this->assertSame('chart', $items[0]->icon);
@@ -55,12 +55,12 @@ final class ContractDeclarationsTest extends TestCase
             'daily_report_staff_stores' => $stores,
         ];
 
-        $this->assertSame([['href' => '/admin/daily-reports', 'label' => __('daily_reports'), 'active' => true]], $links($view(true, []), true));
+        $this->assertSame([['href' => '/admin/daily-reports', 'label' => __('daily_report_daily_reports'), 'active' => true]], $links($view(true, []), true));
         $this->assertSame([
-            ['href' => '/admin/stores/1/daily-reports', 'label' => __('daily_reports') . ' — Shibuya', 'active' => false],
-            ['href' => '/admin/stores/2/daily-reports', 'label' => __('daily_reports') . ' — Ueno', 'active' => true],
+            ['href' => '/admin/stores/1/daily-reports', 'label' => __('daily_report_daily_reports') . ' — Shibuya', 'active' => false],
+            ['href' => '/admin/stores/2/daily-reports', 'label' => __('daily_report_daily_reports') . ' — Ueno', 'active' => true],
         ], $links($view(false, [['id' => 1, 'name' => 'Shibuya'], ['id' => 2, 'name' => 'Ueno']]), false));
-        $this->assertSame([['href' => '/admin/stores/1/daily-reports', 'label' => __('daily_reports'), 'active' => false]], $links($view(false, [['id' => 1, 'name' => 'Shibuya']]), false));
+        $this->assertSame([['href' => '/admin/stores/1/daily-reports', 'label' => __('daily_report_daily_reports'), 'active' => false]], $links($view(false, [['id' => 1, 'name' => 'Shibuya']]), false));
         $this->assertSame([], $links($view(false, []), false));
     }
 
@@ -76,8 +76,8 @@ final class ContractDeclarationsTest extends TestCase
         $this->assertCount(1, $features);
         $this->assertInstanceOf(StoreFeature::class, $features[0]);
         $this->assertSame('daily_reports', $features[0]->key);
-        $this->assertSame('feature_daily_reports', $features[0]->label);
-        $this->assertSame('feature_daily_reports_desc', $features[0]->description);
+        $this->assertSame('daily_report_feature_daily_reports', $features[0]->label);
+        $this->assertSame('daily_report_feature_daily_reports_desc', $features[0]->description);
         $this->assertSame('📊', $features[0]->icon);
         $this->assertSame(70, $features[0]->order);
     }
@@ -137,15 +137,15 @@ final class ContractDeclarationsTest extends TestCase
     /** Libellés des déclarations, des notifications, du journal d'activité et des erreurs, fournis par le bundle. */
     public function testDeclaredLabelsAreTranslatedByTheBundle(): void
     {
-        $keys = ['daily_reports', 'perm_category_daily_reports', 'feature_daily_reports', 'feature_daily_reports_desc',
+        $keys = ['daily_report_daily_reports', 'perm_category_daily_reports', 'daily_report_feature_daily_reports', 'daily_report_feature_daily_reports_desc',
             'notif_daily_report_submitted', 'notif_daily_report_submitted_body', 'notif_daily_report_validated',
             'notif_daily_report_validated_body', 'audit_daily_report_created', 'audit_daily_report_updated',
             'audit_daily_report_submitted', 'audit_daily_report_validated', 'audit_daily_report_mail_sent',
             'audit_daily_report_deleted', 'audit_daily_report_settings_updated', 'audit_export_daily_report_pdf',
-            'audit_cron_auto_validated', 'error_daily_report_access_denied', 'error_daily_report_not_authorized_create',
-            'error_daily_report_not_authorized_delete', 'error_daily_report_not_authorized_send',
-            'error_daily_report_not_authorized_submit', 'error_daily_report_not_authorized_validate',
-            'error_daily_report_permission_insufficient'];
+            'audit_cron_auto_validated', 'daily_report_error_access_denied', 'daily_report_error_not_authorized_create',
+            'daily_report_error_not_authorized_delete', 'daily_report_error_not_authorized_send',
+            'daily_report_error_not_authorized_submit', 'daily_report_error_not_authorized_validate',
+            'daily_report_error_permission_insufficient'];
         foreach (['fr', 'en', 'ja'] as $locale) {
             $lang = json_decode((string) file_get_contents(dirname(__DIR__) . "/lang/{$locale}.json"), true);
             foreach ($keys as $key) {

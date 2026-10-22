@@ -8,6 +8,10 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+### Added
+
+- Contrat de bundle 1.24 : `ContractUsageTest` vérifie aussi que le bundle n'appelle que des fonctions globales déclarées par le contrat (`ContractUsageScanner::functionViolations()`).
+
 ### Changed
 
 - Notifications (contrat 1.23, `kintai_contract` `^1.23`) : types `daily_report_submitted` et `daily_report_validated` déclarés au format enrichi (catégorie « reports », push par défaut, `reference_type` `daily_report`) ; le lien ouvrait déjà le rapport précis, l'ouvrir marque maintenant ses notifications comme lues.

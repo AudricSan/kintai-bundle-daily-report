@@ -22,9 +22,9 @@ $reportId = (int) $report['id'];
 $currency = currency_symbol($store['currency'] ?? 'JPY', store_currency_style($store));
 
 $statusLabels = [
-    'draft'     => __('dr_status_draft'),
-    'submitted' => __('dr_status_submitted'),
-    'validated' => __('dr_status_validated'),
+    'draft'     => __('daily_report_status_draft'),
+    'submitted' => __('daily_report_status_submitted'),
+    'validated' => __('daily_report_status_validated'),
 ];
 $st        = $report['status'] ?? 'draft';
 $badgeHtml = Badge::make($statusLabels[$st] ?? $st)->status($st)->sm()->render();
@@ -52,10 +52,10 @@ function drShowNum(mixed $n, int $dec = 0): string {
 
 <?php if (isset($_GET['mail'])): ?>
     <?php if ($_GET['mail'] === '1'): ?>
-        <div class="alert alert--success mb-sm"><?= __('dr_mail_sent_success') ?></div>
+        <div class="alert alert--success mb-sm"><?= __('daily_report_mail_sent_success') ?></div>
     <?php else: ?>
         <div class="alert alert--danger mb-sm">
-            <?= __('dr_mail_sent_error') ?>
+            <?= __('daily_report_mail_sent_error') ?>
             <a href="<?= $BASE_URL ?>/admin/mail-test" class="alert__link">→ Diagnostic mail</a>
         </div>
     <?php endif; ?>
@@ -63,14 +63,14 @@ function drShowNum(mixed $n, int $dec = 0): string {
 
 <?php if ($canSendMail && empty($settings['mail_recipients'])): ?>
     <div class="alert alert--warning mb-sm">
-        <?= __('dr_no_recipients_warning') ?>
+        <?= __('daily_report_no_recipients_warning') ?>
         <a href="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/settings" class="alert__link">→ <?= __('settings') ?></a>
     </div>
 <?php endif; ?>
 
 <div class="page-header">
     <h2 class="page-header__title">
-        <?= __('dr_title') ?> — <?= drShowDate($report['report_date']) ?>
+        <?= __('daily_report_title') ?> — <?= drShowDate($report['report_date']) ?>
         <?= $badgeHtml ?>
     </h2>
     <div class="page-header__actions">
@@ -92,25 +92,25 @@ function drShowNum(mixed $n, int $dec = 0): string {
                 <table class="data-table dr-kpi-table">
                     <tbody>
                         <tr>
-                            <th><?= __('dr_sales') ?></th>
+                            <th><?= __('daily_report_sales') ?></th>
                             <td class="text-right">
                                 <strong><?= drShowNum($report['sales_total']) ?> <?= $currency ?></strong>
                             </td>
                         </tr>
                         <tr>
-                            <th><?= __('dr_customers') ?></th>
+                            <th><?= __('daily_report_customers') ?></th>
                             <td class="text-right">
                                 <strong><?= drShowNum($report['customer_count']) ?></strong>
                             </td>
                         </tr>
                         <tr>
-                            <th><?= __('dr_labor') ?></th>
+                            <th><?= __('daily_report_labor') ?></th>
                             <td class="text-right">
                                 <strong><?= drShowNum($report['labor_cost']) ?> <?= $currency ?></strong>
                             </td>
                         </tr>
                         <tr>
-                            <th><?= __('dr_waste') ?></th>
+                            <th><?= __('daily_report_waste') ?></th>
                             <td class="text-right">
                                 <strong><?= drShowNum($report['waste_total']) ?> <?= $currency ?></strong>
                             </td>
@@ -123,7 +123,7 @@ function drShowNum(mixed $n, int $dec = 0): string {
                 <table class="data-table dr-meta-table">
                     <tbody>
                         <tr>
-                            <th><?= __('dr_author') ?></th>
+                            <th><?= __('daily_report_author') ?></th>
                             <td><?= htmlspecialchars($authorName) ?></td>
                         </tr>
                         <tr>
@@ -136,23 +136,23 @@ function drShowNum(mixed $n, int $dec = 0): string {
                         </tr>
                         <?php if ($report['submitted_at']): ?>
                         <tr>
-                            <th><?= __('dr_submitted_at') ?></th>
+                            <th><?= __('daily_report_submitted_at') ?></th>
                             <td><?= drShowDt($report['submitted_at']) ?></td>
                         </tr>
                         <?php endif; ?>
                         <?php if ($validatorName): ?>
                         <tr>
-                            <th><?= __('dr_validated_by') ?></th>
+                            <th><?= __('daily_report_validated_by') ?></th>
                             <td><?= htmlspecialchars($validatorName) ?></td>
                         </tr>
                         <tr>
-                            <th><?= __('dr_validated_at') ?></th>
+                            <th><?= __('daily_report_validated_at') ?></th>
                             <td><?= drShowDt($report['validated_at'] ?? '') ?></td>
                         </tr>
                         <?php endif; ?>
                         <?php if ($report['mail_sent_at']): ?>
                         <tr>
-                            <th><?= __('dr_mail_sent_at') ?></th>
+                            <th><?= __('daily_report_mail_sent_at') ?></th>
                             <td><?= drShowDt($report['mail_sent_at']) ?></td>
                         </tr>
                         <?php endif; ?>
@@ -163,7 +163,7 @@ function drShowNum(mixed $n, int $dec = 0): string {
 
         <?php if (!empty($report['notes'])): ?>
             <div class="mt-sm">
-                <p class="form-label">(<?= __('dr_notes') ?>)</p>
+                <p class="form-label">(<?= __('daily_report_notes') ?>)</p>
                 <div class="card card--shaded">
                     <?= nl2br(htmlspecialchars($report['notes'])) ?>
                 </div>
@@ -184,11 +184,11 @@ $shiftRows = $shiftRows ?? [];
 <!-- Planning du jour -->
 <div class="card mb-sm">
     <div class="card-header">
-        <h3><?= __('dr_shifts_of_day') ?></h3>
+        <h3><?= __('daily_report_shifts_of_day') ?></h3>
     </div>
     <?php if (empty($shiftRows)): ?>
         <div class="card-body">
-            <p class="text-muted text-italic m-0"><?= __('dr_no_shifts') ?></p>
+            <p class="text-muted text-italic m-0"><?= __('daily_report_no_shifts') ?></p>
         </div>
     <?php else:
         $showCols = $settings['show_columns'] ?? ['employee', 'type', 'schedule', 'gross_hours', 'pause', 'net_hours'];
@@ -236,34 +236,34 @@ $shiftRows = $shiftRows ?? [];
             <?php if ($canSubmit): ?>
                 <form method="POST"
                       action="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/<?= $reportId ?>/submit"
-                      data-confirm="<?= htmlspecialchars(__('dr_confirm_submit'), ENT_QUOTES) ?>">
+                      data-confirm="<?= htmlspecialchars(__('daily_report_confirm_submit'), ENT_QUOTES) ?>">
                     <?= csrf_field() ?>
-                    <button type="submit" class="btn btn--warning"><?= __('dr_submit') ?></button>
+                    <button type="submit" class="btn btn--warning"><?= __('daily_report_submit') ?></button>
                 </form>
             <?php endif; ?>
 
             <?php if ($canValidate): ?>
                 <form method="POST"
                       action="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/<?= $reportId ?>/validate"
-                      data-confirm="<?= htmlspecialchars(__('dr_confirm_validate'), ENT_QUOTES) ?>">
+                      data-confirm="<?= htmlspecialchars(__('daily_report_confirm_validate'), ENT_QUOTES) ?>">
                     <?= csrf_field() ?>
-                    <button type="submit" class="btn btn--success"><?= __('dr_validate') ?></button>
+                    <button type="submit" class="btn btn--success"><?= __('daily_report_validate') ?></button>
                 </form>
             <?php endif; ?>
 
             <?php if ($canSendMail && !empty($settings['mail_recipients'])): ?>
                 <form method="POST"
                       action="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/<?= $reportId ?>/send-mail"
-                      data-confirm="<?= htmlspecialchars(__('dr_confirm_send_mail'), ENT_QUOTES) ?>">
+                      data-confirm="<?= htmlspecialchars(__('daily_report_confirm_send_mail'), ENT_QUOTES) ?>">
                     <?= csrf_field() ?>
-                    <button type="submit" class="btn btn--ghost">✉ <?= __('dr_send_mail') ?></button>
+                    <button type="submit" class="btn btn--ghost">✉ <?= __('daily_report_send_mail') ?></button>
                 </form>
             <?php endif; ?>
 
             <?php if ($canDelete): ?>
                 <form method="POST"
                       action="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/<?= $reportId ?>/delete"
-                      data-confirm="<?= htmlspecialchars(__('dr_confirm_delete'), ENT_QUOTES) ?>"
+                      data-confirm="<?= htmlspecialchars(__('daily_report_confirm_delete'), ENT_QUOTES) ?>"
                       class="ml-auto">
                     <?= csrf_field() ?>
                     <button type="submit" class="btn btn--danger"><?= __('delete') ?></button>

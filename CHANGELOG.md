@@ -8,6 +8,9 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+### Changed
+- **Traductions conformes au contrat** : 91 clés renommées avec le préfixe du bundle (`daily_report_…`), sans changement de texte affiché ; `tests/TranslationContractTest.php` impose désormais parité fr/en/ja, préfixe, collisions et clés connues.
+
 ### Fixed
 
 - **Réglages : l'heure de validation automatique et les heures de rappel ne pouvaient pas être réglées.** Le formulaire n'avait aucun champ pour elles alors que `saveSettings()` les lit dans la requête : chaque enregistrement des réglages effaçait la validation automatique (la tâche `auto-validate` ne validait donc jamais rien) et remettait le rappel à 15:00 et l'heure « sans rapport » à 18:00. Une carte « Horaires » propose maintenant les trois heures (validation automatique, rappel, heure « sans rapport »), en fr/en/ja. `DailyReportSettingsFormTest` vérifie que chaque réglage enregistré a son champ.

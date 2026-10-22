@@ -92,7 +92,7 @@ final class DailyReportPdfService
                 'shiftRows'   => $this->buildShiftRows($store, $report),
                 'downloadUrl' => $downloadUrl,
             ]);
-            $title = __('dr_title') . ' — ' . ($report['report_date'] ?? '');
+            $title = __('daily_report_title') . ' — ' . ($report['report_date'] ?? '');
         } finally {
             $this->translations->setLocale($previous);
         }

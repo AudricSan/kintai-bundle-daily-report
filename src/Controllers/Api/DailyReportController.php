@@ -202,7 +202,7 @@ final class DailyReportController
     {
         $report = $this->reports->findById((int) $request->param('id'));
         if ($report === null) {
-            throw new NotFoundException(__('error_report_not_found'));
+            throw new NotFoundException(__('daily_report_error_report_not_found'));
         }
         return $report;
     }
@@ -222,7 +222,7 @@ final class DailyReportController
     private function forbidden(): Response
     {
         return Response::json([
-            'error' => __('error_daily_report_permission_insufficient'),
+            'error' => __('daily_report_error_permission_insufficient'),
             'code'  => 'FORBIDDEN',
         ], 403);
     }

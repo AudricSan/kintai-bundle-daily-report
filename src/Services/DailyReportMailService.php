@@ -6,6 +6,7 @@ namespace kintai\Bundles\Installed\DailyReport\Services;
 
 use kintai\Contract\Services\Mailer;
 use kintai\Contract\Services\TranslationService;
+use kintai\Contract\Services\UserSelection;
 
 /**
  * Envoi du rapport journalier par e-mail.
@@ -17,6 +18,7 @@ final class DailyReportMailService
         private readonly DailyReportPermissionService $permissions,
         private readonly Mailer $mailer,
         private readonly TranslationService $translations,
+        private readonly UserSelection $selection,
     ) {}
 
     /**
@@ -31,27 +33,17 @@ final class DailyReportMailService
         array   $author   = [],
         ?string $locale   = null,
     ): bool {
-        $settings   = $this->permissions->getSettings($store);
-        $recipients = array_values(array_filter(
-            $settings['mail_recipients'] ?? [],
-            fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL) !== false,
-        ));
+        $targets = $this->targets($store, $this->permissions->getSettings($store));
 
-        if (empty($recipients)) {
+        if ($targets === []) {
             return false;
         }
 
-        $resolved = $this->resolveLocale($author, $store, $locale);
-        $previous = $this->translations->getLocale();
-        $this->translations->setLocale($resolved);
-
-        try {
-            $storeName  = $store['name'] ?? 'Kintai';
-            $reportDate = $report['report_date'] ?? '';
-            $subject    = '[' . $storeName . '] ' . __('daily_report_title') . ' — ' . $reportDate;
-            $body       = $this->buildBody($report, $store, $resolved);
-        } finally {
-            $this->translations->setLocale($previous);
+        // Une langue par destinataire (sa langue de compte), sauf locale explicite ; adresse héritée : langue de l'auteur ou du store.
+        $byLocale = [];
+        foreach ($targets as $target) {
+            $source = $target['language'] !== '' ? ['language' => $target['language']] : $author;
+            $byLocale[$this->resolveLocale($source, $store, $locale)][] = $target['email'];
         }
 
         $tmpFile     = null;
@@ -63,13 +55,63 @@ final class DailyReportMailService
             $attachments = [$tmpFile];
         }
 
+        $sentAny  = false;
+        $previous = $this->translations->getLocale();
         try {
-            return $this->mailer->send($recipients, $subject, $body, $attachments);
+            foreach ($byLocale as $resolved => $emails) {
+                $this->translations->setLocale((string) $resolved);
+                try {
+                    $storeName  = $store['name'] ?? 'Kintai';
+                    $reportDate = $report['report_date'] ?? '';
+                    $subject    = '[' . $storeName . '] ' . __('daily_report_title') . ' — ' . $reportDate;
+                    $body       = $this->buildBody($report, $store, (string) $resolved);
+                } finally {
+                    $this->translations->setLocale($previous);
+                }
+
+                // Un e-mail par personne : les destinataires ne voient pas les adresses des autres.
+                foreach ($emails as $email) {
+                    $sentAny = $this->mailer->send([$email], $subject, $body, $attachments) || $sentAny;
+                }
+            }
         } finally {
             if ($tmpFile !== null && file_exists($tmpFile)) {
                 unlink($tmpFile);
             }
         }
+
+        return $sentAny;
+    }
+
+    /**
+     * Destinataires du magasin : employés choisis (relus à l'envoi, donc adresse à jour et comptes inactifs écartés), puis
+     * adresses saisies à la main avant la sélection d'employés. Sans doublon.
+     *
+     * @param array<string, mixed> $settings
+     * @return list<array{email: string, language: string}>
+     */
+    private function targets(array $store, array $settings): array
+    {
+        $targets = [];
+        $seen    = [];
+        $add = static function (string $email, string $language) use (&$targets, &$seen): void {
+            $key = strtolower($email);
+            if (filter_var($email, FILTER_VALIDATE_EMAIL) !== false && !isset($seen[$key])) {
+                $seen[$key] = true;
+                $targets[]  = ['email' => $email, 'language' => $language];
+            }
+        };
+
+        $ids = (array) ($settings['mail_recipient_ids'] ?? []);
+        if ($ids !== [] && isset($store['id'])) {
+            foreach ($this->selection->resolve((int) $store['id'], $ids) as $user) {
+                $add($user['email'], $user['language']);
+            }
+        }
+        foreach ((array) ($settings['mail_recipients'] ?? []) as $email) {
+            $add((string) $email, '');
+        }
+        return $targets;
     }
 
     private function resolveLocale(array $author, array $store, ?string $override = null): string

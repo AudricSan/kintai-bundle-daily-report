@@ -8,6 +8,15 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-23
+
+### Changed
+- **Destinataires du rapport : on coche des employés du magasin** au lieu de saisir des adresses dans un champ texte. La liste vient du composant partagé du Core (`UserPicker`, contrat 1.29) ; on enregistre le compte de l'employé (`mail_recipient_ids`), donc un changement d'adresse est suivi et un compte désactivé ou retiré du magasin ne reçoit plus rien.
+- **Un e-mail par personne**, dans la langue de son compte : les destinataires ne voient plus les adresses des autres.
+- Les adresses saisies auparavant (`mail_recipients`) restent utilisées et sont listées à part dans les réglages ; on peut les retirer mais plus en ajouter.
+- Le bundle exige le contrat `^1.29`.
+- Tests : `DailyReportRecipientsTest` (envoi individuel, langue, comptes inactifs, adresses héritées, doublons).
+
 ## [2.0.0] - 2026-10-23
 
 Première version stable de la ligne 2 : elle regroupe, à l'identique, tout ce qui a été publié en alpha et en bêta depuis la ligne 1 (voir les sections ci-dessous), sans changement fonctionnel propre à cette version.

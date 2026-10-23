@@ -85,6 +85,7 @@ final class DailyReportControllerTest extends TestCase
                 $permissions,
                 new MailerService(['driver' => 'native', 'from' => ['address' => 'test@kintai.test', 'name' => 'Kintai']]),
                 $translations,
+                new \kintai\Core\Services\UserSelection($this->storeUsers, $this->users, $permissionService),
             );
             $this->controller = new DailyReportController(
                 new ViewRenderer(sys_get_temp_dir()),
@@ -101,6 +102,7 @@ final class DailyReportControllerTest extends TestCase
                 $this->shiftTypes,
                 $this->notifs,
                 $permissionService,
+                new \kintai\Core\Services\UserSelection($this->storeUsers, $this->users, $permissionService),
             );
         }
 

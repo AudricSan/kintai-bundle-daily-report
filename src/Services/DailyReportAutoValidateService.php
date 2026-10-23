@@ -93,7 +93,7 @@ final class DailyReportAutoValidateService
 
         $this->reports->save($updated);
 
-        if (!empty($settings['auto_send_on_validate']) && !empty($settings['mail_recipients'])) {
+        if (!empty($settings['auto_send_on_validate']) && (!empty($settings['mail_recipient_ids']) || !empty($settings['mail_recipients']))) {
             $author   = $this->users->findById((int) $report['author_id']) ?? [];
             $pdfBytes = $this->pdfService->generateBytes($updated, $store, $author);
             $sent     = $this->mailService->send($updated, $store, $pdfBytes, $author);

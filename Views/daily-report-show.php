@@ -61,7 +61,7 @@ function drShowNum(mixed $n, int $dec = 0): string {
     <?php endif; ?>
 <?php endif; ?>
 
-<?php if ($canSendMail && empty($settings['mail_recipients'])): ?>
+<?php if ($canSendMail && empty($settings['mail_recipient_ids']) && empty($settings['mail_recipients'])): ?>
     <div class="alert alert--warning mb-sm">
         <?= __('daily_report_no_recipients_warning') ?>
         <a href="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/settings" class="alert__link">→ <?= __('settings') ?></a>
@@ -251,7 +251,7 @@ $shiftRows = $shiftRows ?? [];
                 </form>
             <?php endif; ?>
 
-            <?php if ($canSendMail && !empty($settings['mail_recipients'])): ?>
+            <?php if ($canSendMail && (!empty($settings['mail_recipient_ids']) || !empty($settings['mail_recipients']))): ?>
                 <form method="POST"
                       action="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/<?= $reportId ?>/send-mail"
                       data-confirm="<?= htmlspecialchars(__('daily_report_confirm_send_mail'), ENT_QUOTES) ?>">

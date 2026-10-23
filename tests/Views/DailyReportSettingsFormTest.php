@@ -42,8 +42,9 @@ final class DailyReportSettingsFormTest extends TestCase
         $this->assertNotEmpty($fields);
 
         foreach ($fields as $name) {
+            // Un champ émis par le composant UserPicker n'a pas de balise name="…" dans le source de la vue.
             $this->assertMatchesRegularExpression(
-                '/name="' . preg_quote($name, '/') . '(\[\])?"/',
+                '/name="' . preg_quote($name, '/') . '(\[\])?"|UserPicker::make\(\'' . preg_quote($name, '/') . '\'/',
                 $this->view,
                 "Le réglage « $name » est enregistré par le contrôleur mais n'a aucun champ dans le formulaire."
             );

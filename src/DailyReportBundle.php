@@ -24,6 +24,7 @@ use kintai\Contract\Extension\NavItem;
 use kintai\Contract\Extension\StoreFeature;
 use kintai\Contract\Services\Mailer;
 use kintai\Contract\Services\TranslationService;
+use kintai\Contract\Services\UserSelection;
 use kintai\Contract\View\ViewRenderer;
 use kintai\Bundles\Installed\DailyReport\Services\DailyReportPermissionService;
 
@@ -84,6 +85,7 @@ final class DailyReportBundle extends Bundle
             $c->make(DailyReportPermissionService::class),
             $c->make(Mailer::class),
             $c->make(TranslationService::class),
+            $c->make(UserSelection::class),
         ));
         $container->singleton(DailyReportAutoValidateService::class, fn(Container $c) => new DailyReportAutoValidateService(
             $c->make(StoreRepositoryInterface::class),

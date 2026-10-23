@@ -61,6 +61,11 @@ final class AutoValidateJobTest extends TestCase
                 $this->createStub(TranslationRepositoryInterface::class),
                 $this->createStub(LanguageRepositoryInterface::class),
             ),
+            new \kintai\Core\Services\UserSelection(
+                $this->createStub(\kintai\Core\Repositories\StoreUserRepositoryInterface::class),
+                $users,
+                new PermissionService($this->createStub(RoleAssignmentRepositoryInterface::class), $this->createStub(RoleRepositoryInterface::class)),
+            ),
         );
 
         $logger          = new AuditLogger();

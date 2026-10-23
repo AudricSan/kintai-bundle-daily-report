@@ -79,12 +79,34 @@ $noReportTime      = $settings['no_report_time']     ?? '18:00';
         <div class="card-body form-stack">
 
             <div class="form-group">
-                <label class="form-label"><?= __('daily_report_setting_recipients') ?></label>
-                <textarea name="mail_recipients" class="form-control" rows="4"
-                          placeholder="manager@example.com&#10;direction@example.com"
-                ><?= htmlspecialchars($recipients) ?></textarea>
-                <span class="form-hint"><?= __('daily_report_setting_recipients_hint') ?></span>
+                <?= \kintai\Contract\View\Components\UserPicker::make('mail_recipient_ids', $candidates ?? [])
+                    ->selected($recipientIds)
+                    ->legend(__('daily_report_setting_recipients'))
+                    ->hint(__('daily_report_setting_recipients_hint'))
+                    ->render() ?>
+                <?php if (!empty($errors['mail_recipient_ids'])): ?>
+                    <span class="form-error"><?= htmlspecialchars((string) $errors['mail_recipient_ids']) ?></span>
+                <?php endif; ?>
             </div>
+
+            <?php if ($legacyRecipients !== []): ?>
+                <div class="form-group">
+                    <fieldset class="user-picker">
+                        <legend class="user-picker__legend"><?= __('daily_report_setting_legacy_recipients') ?></legend>
+                        <p class="user-picker__hint"><?= __('daily_report_setting_legacy_recipients_hint') ?></p>
+                        <ul class="user-picker__list">
+                            <?php foreach ($legacyRecipients as $address): ?>
+                                <li class="user-picker__item">
+                                    <label class="user-picker__label">
+                                        <input type="checkbox" name="legacy_recipients[]" value="<?= htmlspecialchars((string) $address, ENT_QUOTES) ?>" checked>
+                                        <span class="user-picker__name"><?= htmlspecialchars((string) $address) ?></span>
+                                    </label>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </fieldset>
+                </div>
+            <?php endif; ?>
 
             <div class="form-group">
                 <label class="form-label"><?= __('daily_report_setting_auto_send') ?></label>

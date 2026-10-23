@@ -8,6 +8,13 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-10-23
+
+### Fixed
+- **La page des réglages d'un magasin répondait 500** (2.1.0) : la vue lisait `$recipientIds` et `$legacyRecipients` sans les définir, donc `UserPicker::selected()` recevait `null`. Les deux variables sont maintenant calculées en tête de vue depuis `mail_recipient_ids` et `mail_recipients`.
+- Le lien vers la page des rôles (réservé à l'Owner) lisait `$auth_user` au lieu de `$authUser` : l'Owner ne le voyait jamais.
+- Test `testEveryVariableReadByTheViewIsDefined` : échoue si la vue des réglages lit une variable ni fournie par le contrôleur ni définie en tête de vue.
+
 ## [2.1.0] - 2026-10-23
 
 ### Changed

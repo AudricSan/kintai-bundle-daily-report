@@ -51,6 +51,24 @@ final class DailyReportSettingsFormTest extends TestCase
         }
     }
 
+    /**
+     * Régression 2.1.0 : la vue lisait $recipientIds et $legacyRecipients sans les définir, la page des réglages
+     * répondait 500 (TypeError dans UserPicker::selected()). Les tests unitaires ne rendent pas la vue : on vérifie ici
+     * que chaque variable utilisée est soit fournie par le contrôleur, soit définie en tête de vue.
+     */
+    public function testEveryVariableReadByTheViewIsDefined(): void
+    {
+        $provided = ['store', 'settings', 'authUser', 'membership', 'errors', 'candidates', 'BASE_URL'];
+
+        preg_match_all('/\$([a-zA-Z_][a-zA-Z0-9_]*)/', $this->view, $used);
+        preg_match_all('/\$([a-zA-Z_][a-zA-Z0-9_]*)\s*=[^=>]|as\s+\$([a-zA-Z_][a-zA-Z0-9_]*)|\$([a-zA-Z_][a-zA-Z0-9_]*)\s*=>|=>\s*\$([a-zA-Z_][a-zA-Z0-9_]*)\s*\)/', $this->view, $defined);
+
+        $known = array_merge($provided, ['this'], array_filter(array_merge($defined[1], $defined[2], $defined[3], $defined[4])));
+        $undefined = array_values(array_diff(array_unique($used[1]), $known));
+
+        $this->assertSame([], $undefined, 'Variable(s) lue(s) par la vue sans être définie(s) : ' . implode(', ', $undefined));
+    }
+
     public function testTheAutoValidationAndReminderTimesAreEditable(): void
     {
         foreach (['auto_validate_time', 'reminder_time', 'no_report_time'] as $name) {

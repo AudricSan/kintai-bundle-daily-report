@@ -1,7 +1,7 @@
 {
     "slug": "daily-report",
     "name": "Rapports journaliers",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "description": "Rapports d'activité quotidienne, workflow brouillon → soumis → validé.",
     "author": {
         "name": "AudricSan",

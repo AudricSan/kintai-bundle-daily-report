@@ -8,8 +8,10 @@
 $storeId = (int) $store['id'];
 $action  = $BASE_URL . '/admin/stores/' . $storeId . '/daily-reports/settings';
 
-$recipients        = implode("\n", $settings['mail_recipients'] ?? []);
-$autoValidateTime  = $settings['auto_validate_time'] ?? '';
+// Employés choisis (comptes) et adresses saisies avant la sélection, encore envoyées mais plus ajoutables.
+$recipientIds      = array_map('intval', (array) ($settings['mail_recipient_ids'] ?? []));
+$legacyRecipients  = array_values(array_filter((array) ($settings['mail_recipients'] ?? []), 'is_string'));
+$autoValidateTime = $settings['auto_validate_time'] ?? '';
 $reminderTime      = $settings['reminder_time']      ?? '15:00';
 $noReportTime      = $settings['no_report_time']     ?? '18:00';
 ?>
@@ -64,7 +66,7 @@ $noReportTime      = $settings['no_report_time']     ?? '18:00';
             <p class="form-hint">
                 <?= __('daily_report_setting_permissions_hint') ?>
                 <?php // La page des rôles est réservée à l'Owner : un lien y menait les gérants vers une page 403. ?>
-                <?php if (!empty($auth_user['is_admin'])): ?>
+                <?php if (!empty($authUser['is_admin'])): ?>
                     <a href="<?= route_url('admin.roles') ?>"><?= __('roles') ?></a>
                 <?php else: ?>
                     <?= __('roles') ?>

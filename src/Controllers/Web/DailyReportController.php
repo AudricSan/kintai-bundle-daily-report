@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\DailyReport\Controllers\Web;
 
-use kintai\Core\Auth\PermissionService;
-use kintai\Core\Exceptions\ForbiddenException;
-use kintai\Core\Exceptions\NotFoundException;
-use kintai\Core\Repositories\DailyReportRepositoryInterface;
-use kintai\Core\Repositories\ShiftRepositoryInterface;
-use kintai\Core\Repositories\ShiftTypeRepositoryInterface;
-use kintai\Core\Repositories\StoreRepositoryInterface;
-use kintai\Core\Repositories\StoreUserRepositoryInterface;
-use kintai\Core\Repositories\UserRepositoryInterface;
-use kintai\Core\Request;
-use kintai\Core\Response;
-use kintai\Core\Services\AuditLogger;
-use kintai\Core\Services\DailyReportMailService;
-use kintai\Core\Services\DailyReportPdfService;
-use kintai\Core\Services\DailyReportPermissionService;
-use kintai\Core\Services\NotificationService;
-use kintai\Core\Services\TranslationService;
-use kintai\UI\ViewRenderer;
+use kintai\Contract\Auth\PermissionService;
+use kintai\Contract\Exceptions\ForbiddenException;
+use kintai\Contract\Exceptions\NotFoundException;
+use kintai\Bundles\Installed\DailyReport\Repositories\DailyReportRepositoryInterface;
+use kintai\Contract\Data\ShiftRepositoryInterface;
+use kintai\Contract\Data\ShiftTypeRepositoryInterface;
+use kintai\Contract\Data\StoreRepositoryInterface;
+use kintai\Contract\Data\StoreUserRepositoryInterface;
+use kintai\Contract\Data\UserRepositoryInterface;
+use kintai\Contract\Http\Request;
+use kintai\Contract\Http\Response;
+use kintai\Contract\Services\AuditLogger;
+use kintai\Bundles\Installed\DailyReport\Services\DailyReportMailService;
+use kintai\Bundles\Installed\DailyReport\Services\DailyReportPdfService;
+use kintai\Bundles\Installed\DailyReport\Services\DailyReportPermissionService;
+use kintai\Contract\Services\NotificationService;
+use kintai\Contract\Services\TranslationService;
+use kintai\Contract\View\ViewRenderer;
 
 final class DailyReportController
 {
@@ -56,7 +56,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canViewList($authUser, $store, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_access_denied'));
+            throw new ForbiddenException(__('daily_report_error_access_denied'));
         }
 
         $status    = $request->query('status', '');
@@ -157,7 +157,7 @@ final class DailyReportController
         $queryStoreIds = $storeIdsFilter;
         if ($filterStoreId > 0) {
             if (!$isUnrestricted && !in_array($filterStoreId, $storeIdsFilter, true)) {
-                throw new ForbiddenException(__('error_daily_report_access_denied'));
+                throw new ForbiddenException(__('daily_report_error_access_denied'));
             }
             $queryStoreIds = [$filterStoreId];
         }
@@ -260,7 +260,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canCreate($authUser, $store, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_not_authorized_create'));
+            throw new ForbiddenException(__('daily_report_error_not_authorized_create'));
         }
 
         $today    = date('Y-m-d');
@@ -327,7 +327,7 @@ final class DailyReportController
 
         // Interdire les dates passées pour tous sauf le super admin
         if (empty($authUser['is_admin']) && $reportDate < date('Y-m-d')) {
-            $errors['report_date'] = __('dr_error_past_date');
+            $errors['report_date'] = __('daily_report_error_past_date');
             $html = $this->view->render('daily-report::daily-report-form', [
                 'store'      => $store,
                 'report'     => null,
@@ -396,8 +396,11 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canViewReport($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_access_denied'));
+            throw new ForbiddenException(__('daily_report_error_access_denied'));
         }
+
+        // Le rapport est ouvert par quelqu'un qui a le droit de le voir : ses notifications sont lues.
+        $this->notifs->markReadFor((int) $authUser['id'], 'daily_report', $reportId);
 
         $author   = $this->users->findById((int) $report['author_id']);
         $validator = $report['validated_by'] ? $this->users->findById((int) $report['validated_by']) : null;
@@ -439,7 +442,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canEdit($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_report_locked'));
+            throw new ForbiddenException(__('daily_report_error_report_locked'));
         }
 
         $settings = $this->permissions->getSettings($store);
@@ -475,7 +478,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canEdit($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_report_locked'));
+            throw new ForbiddenException(__('daily_report_error_report_locked'));
         }
 
         $data   = $request->allPost();
@@ -532,7 +535,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canSubmit($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_not_authorized_submit'));
+            throw new ForbiddenException(__('daily_report_error_not_authorized_submit'));
         }
 
         $submitted = $this->reports->save(array_merge($report, [
@@ -575,7 +578,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canValidate($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_not_authorized_validate'));
+            throw new ForbiddenException(__('daily_report_error_not_authorized_validate'));
         }
 
         $now     = date('Y-m-d H:i:s');
@@ -636,7 +639,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canSendMail($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_not_authorized_send'));
+            throw new ForbiddenException(__('daily_report_error_not_authorized_send'));
         }
 
         $mailAuthor = $this->users->findById((int) $report['author_id']) ?? [];
@@ -712,7 +715,7 @@ final class DailyReportController
         $bytes     = $this->pdfService->generateBytes($report, $store, $pdfAuthor, $this->translations->getLocale());
 
         if ($bytes === null) {
-            throw new NotFoundException(__('error_pdf_generation_failed'));
+            throw new NotFoundException(__('daily_report_error_pdf_generation_failed'));
         }
 
         $this->auditLogger->log($request, 'export.daily_report_pdf', 'daily_report', $reportId, [
@@ -741,7 +744,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canDelete($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_not_authorized_delete'));
+            throw new ForbiddenException(__('daily_report_error_not_authorized_delete'));
         }
 
         $this->reports->save(array_merge($report, [
@@ -905,7 +908,7 @@ final class DailyReportController
     {
         $report = $this->reports->findById($id);
         if ($report === null || (int) $report['store_id'] !== $storeId) {
-            throw new NotFoundException(__('error_report_not_found'));
+            throw new NotFoundException(__('daily_report_error_report_not_found'));
         }
         return $report;
     }

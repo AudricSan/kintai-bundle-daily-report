@@ -43,7 +43,7 @@ $backUrl   = back_url($isEdit
 
 <div class="page-header">
     <h2 class="page-header__title">
-        <?= $isEdit ? __('dr_edit') : __('dr_new') ?> — <?= htmlspecialchars($store['name']) ?>
+        <?= $isEdit ? __('daily_report_edit') : __('daily_report_new') ?> — <?= htmlspecialchars($store['name']) ?>
     </h2>
     <div class="page-header__actions">
         <a href="<?= $backUrl ?>" class="btn btn--ghost btn--sm">← <?= __('back') ?></a>
@@ -52,7 +52,7 @@ $backUrl   = back_url($isEdit
 
 <?php if ($existing): ?>
     <div class="alert alert--warning mb-sm">
-        <?= __('dr_already_exists', ['date' => htmlspecialchars($existing['report_date'])]) ?>
+        <?= __('daily_report_already_exists', ['date' => htmlspecialchars($existing['report_date'])]) ?>
         <a href="<?= $BASE_URL ?>/admin/stores/<?= $storeId ?>/daily-reports/<?= (int) $existing['id'] ?>"
            class="btn btn--ghost btn--sm ml-xs"><?= __('view') ?></a>
     </div>
@@ -91,12 +91,12 @@ $backUrl   = back_url($isEdit
 
     <!-- ── Chiffres du jour ── -->
     <div class="card card--mb">
-        <div class="card-header"><?= __('dr_form_hint') ?></div>
+        <div class="card-header"><?= __('daily_report_form_hint') ?></div>
         <div class="card-body form-stack">
 
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label"><?= __('dr_sales') ?> (<?= $currency ?>)</label>
+                    <label class="form-label"><?= __('daily_report_sales') ?> (<?= $currency ?>)</label>
                     <input type="text" inputmode="numeric" name="sales_total" data-numeric-input
                            class="form-control<?= isset($errors['sales_total']) ? ' is-invalid' : '' ?>"
                            value="<?= drFormVal($old, 'sales_total', 0) ?>">
@@ -106,7 +106,7 @@ $backUrl   = back_url($isEdit
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label"><?= __('dr_customers') ?></label>
+                    <label class="form-label"><?= __('daily_report_customers') ?></label>
                     <input type="text" inputmode="numeric" name="customer_count" data-numeric-input
                            class="form-control<?= isset($errors['customer_count']) ? ' is-invalid' : '' ?>"
                            value="<?= drFormVal($old, 'customer_count', 0) ?>">
@@ -118,7 +118,7 @@ $backUrl   = back_url($isEdit
 
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label"><?= __('dr_labor') ?> (<?= $currency ?>)</label>
+                    <label class="form-label"><?= __('daily_report_labor') ?> (<?= $currency ?>)</label>
                     <input type="text" inputmode="numeric" name="labor_cost" data-numeric-input
                            class="form-control<?= isset($errors['labor_cost']) ? ' is-invalid' : '' ?>"
                            value="<?= drFormVal($old, 'labor_cost', 0) ?>">
@@ -128,7 +128,7 @@ $backUrl   = back_url($isEdit
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label"><?= __('dr_waste') ?> (<?= $currency ?>)</label>
+                    <label class="form-label"><?= __('daily_report_waste') ?> (<?= $currency ?>)</label>
                     <input type="text" inputmode="numeric" name="waste_total" data-numeric-input
                            class="form-control<?= isset($errors['waste_total']) ? ' is-invalid' : '' ?>"
                            value="<?= drFormVal($old, 'waste_total', 0) ?>">
@@ -143,10 +143,10 @@ $backUrl   = back_url($isEdit
 
     <!-- ── Planning du lendemain ── -->
     <div class="card card--mb">
-        <div class="card-header"><?= __('dr_shifts_of_day') ?></div>
+        <div class="card-header"><?= __('daily_report_shifts_of_day') ?></div>
         <?php if (empty($shiftRows)): ?>
             <div class="card-body">
-                <p class="text-muted text-italic m-0"><?= __('dr_no_shifts') ?></p>
+                <p class="text-muted text-italic m-0"><?= __('daily_report_no_shifts') ?></p>
             </div>
         <?php else:
             $showCols = $settings['show_columns'] ?? ['employee', 'type', 'schedule', 'gross_hours', 'pause', 'net_hours'];
@@ -184,9 +184,9 @@ $backUrl   = back_url($isEdit
     <div class="card card--mb">
         <div class="card-body">
             <div class="form-group">
-                <label class="form-label"><?= __('dr_notes') ?></label>
+                <label class="form-label"><?= __('daily_report_notes') ?></label>
                 <textarea name="notes" class="form-control textarea--notes" rows="4"
-                          placeholder="<?= __('dr_notes_placeholder') ?>"><?= drFormVal($old, 'notes') ?></textarea>
+                          placeholder="<?= __('daily_report_notes_placeholder') ?>"><?= drFormVal($old, 'notes') ?></textarea>
             </div>
         </div>
     </div>
@@ -194,11 +194,13 @@ $backUrl   = back_url($isEdit
     <!-- ── Actions ── -->
     <div class="form-actions">
         <button type="submit" class="btn btn--primary">
-            <?= $isEdit ? __('save') : __('dr_create') ?>
+            <?= $isEdit ? __('save') : __('daily_report_create') ?>
         </button>
         <a href="<?= $backUrl ?>" class="btn btn--ghost"><?= __('cancel') ?></a>
     </div>
 
 </form>
 
-<script src="<?= $BASE_URL ?>/assets/js/modules/numeric-input.js"></script>
+<?php if ($numericInputJs = bundle_asset('daily-report', 'js/numeric-input.js')): ?>
+<script src="<?= $numericInputJs ?>"></script>
+<?php endif; ?>

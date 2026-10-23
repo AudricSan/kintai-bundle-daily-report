@@ -1,5 +1,5 @@
 <?php
-use kintai\UI\Components\Badge;
+use kintai\Contract\View\Components\Badge;
 
 /**
  * @var array  $grouped        [ storeId => ['store' => [...], 'reports' => [...]] ]  (V1 – filtré complet)
@@ -15,9 +15,9 @@ use kintai\UI\Components\Badge;
  */
 
 $statusLabels = [
-    'draft'     => __('dr_status_draft'),
-    'submitted' => __('dr_status_submitted'),
-    'validated' => __('dr_status_validated'),
+    'draft'     => __('daily_report_status_draft'),
+    'submitted' => __('daily_report_status_submitted'),
+    'validated' => __('daily_report_status_validated'),
 ];
 
 $monthNames = [
@@ -77,16 +77,19 @@ foreach ($byYearMonth as &$months) {
 }
 unset($months, $days);
 ?>
+<?php if ($dailyReportCss = bundle_asset('daily-report', 'css/daily-report.css')): ?>
+<link rel="stylesheet" href="<?= $dailyReportCss ?>">
+<?php endif; ?>
 
 <div class="page-header">
-    <h2 class="page-header__title"><?= __('dr_title') ?></h2>
+    <h2 class="page-header__title"><?= __('daily_report_title') ?></h2>
     <div class="btn-group btn-group--switcher" id="dr-view-switcher">
         <span class="btn-group__thumb" aria-hidden="true"></span>
-        <button type="button" class="btn btn--ghost btn--sm" id="dr-btn-v1" onclick="drSwitchView('v1')">
-            ☰ <?= __('dr_view_by_store') ?>
+        <button type="button" class="btn btn--ghost btn--sm" id="dr-btn-v1" data-on-click="drSwitchView" data-args='["v1"]'>
+            ☰ <?= __('daily_report_view_by_store') ?>
         </button>
-        <button type="button" class="btn btn--ghost btn--sm" id="dr-btn-v2" onclick="drSwitchView('v2')">
-            📅 <?= __('dr_view_by_day') ?>
+        <button type="button" class="btn btn--ghost btn--sm" id="dr-btn-v2" data-on-click="drSwitchView" data-args='["v2"]'>
+            📅 <?= __('daily_report_view_by_day') ?>
         </button>
     </div>
 </div>
@@ -94,12 +97,11 @@ unset($months, $days);
 <!-- ===== FILTRE V1 (complet) ===== -->
 <div id="dr-filter-v1" class="card card--filters mb-sm">
     <form method="GET" action="" class="filter-bar">
-        <?= csrf_field() ?>
         <div class="shifts-filters__row">
             <div class="shifts-filters__group">
                 <label class="shifts-filters__label" for="dr-store"><?= __('store') ?></label>
-                <select id="dr-store" name="store_id" class="form-control form-control-sm" onchange="this.form.submit()">
-                    <option value="0"><?= __('dr_filter_all_stores') ?></option>
+                <select id="dr-store" name="store_id" class="form-control form-control-sm" data-submit-on-change>
+                    <option value="0"><?= __('daily_report_filter_all_stores') ?></option>
                     <?php foreach ($stores as $s): ?>
                         <option value="<?= (int)$s['id'] ?>" <?= $filterStoreId === (int)$s['id'] ? 'selected' : '' ?>>
                             <?= htmlspecialchars($s['name']) ?>
@@ -109,7 +111,7 @@ unset($months, $days);
             </div>
             <div class="shifts-filters__group">
                 <label class="shifts-filters__label" for="dr-status"><?= __('status') ?></label>
-                <select id="dr-status" name="status" class="form-control form-control-sm" onchange="this.form.submit()">
+                <select id="dr-status" name="status" class="form-control form-control-sm" data-submit-on-change>
                     <option value=""><?= __('all') ?></option>
                     <?php foreach (['draft', 'submitted', 'validated'] as $s): ?>
                         <option value="<?= $s ?>" <?= $filterStatus === $s ? 'selected' : '' ?>>
@@ -119,8 +121,8 @@ unset($months, $days);
                 </select>
             </div>
             <div class="shifts-filters__group">
-                <label class="shifts-filters__label" for="dr-year"><?= __('dr_filter_year') ?></label>
-                <select id="dr-year" name="year" class="form-control form-control-sm" onchange="this.form.submit()">
+                <label class="shifts-filters__label" for="dr-year"><?= __('daily_report_filter_year') ?></label>
+                <select id="dr-year" name="year" class="form-control form-control-sm" data-submit-on-change>
                     <option value="0"><?= __('all') ?></option>
                     <?php foreach ($years as $y): ?>
                         <option value="<?= $y ?>" <?= $filterYear === $y ? 'selected' : '' ?>><?= $y ?></option>
@@ -128,8 +130,8 @@ unset($months, $days);
                 </select>
             </div>
             <div class="shifts-filters__group">
-                <label class="shifts-filters__label" for="dr-month"><?= __('dr_filter_month') ?></label>
-                <select id="dr-month" name="month" class="form-control form-control-sm" onchange="this.form.submit()">
+                <label class="shifts-filters__label" for="dr-month"><?= __('daily_report_filter_month') ?></label>
+                <select id="dr-month" name="month" class="form-control form-control-sm" data-submit-on-change>
                     <option value="0"><?= __('all') ?></option>
                     <?php foreach ($monthNames as $num => $name): ?>
                         <option value="<?= $num ?>" <?= $filterMonth === $num ? 'selected' : '' ?>><?= $name ?></option>
@@ -146,11 +148,10 @@ unset($months, $days);
 <!-- ===== FILTRE V2 (année seulement) ===== -->
 <div id="dr-filter-v2" class="card card--filters mb-sm">
     <form method="GET" action="" class="filter-bar">
-        <?= csrf_field() ?>
         <div class="shifts-filters__row">
             <div class="shifts-filters__group">
-                <label class="shifts-filters__label" for="dr-year-v2"><?= __('dr_filter_year') ?></label>
-                <select id="dr-year-v2" name="year" class="form-control form-control-sm" onchange="this.form.submit()">
+                <label class="shifts-filters__label" for="dr-year-v2"><?= __('daily_report_filter_year') ?></label>
+                <select id="dr-year-v2" name="year" class="form-control form-control-sm" data-submit-on-change>
                     <option value="0"><?= __('all') ?></option>
                     <?php foreach ($years as $y): ?>
                         <option value="<?= $y ?>" <?= $filterYear === $y ? 'selected' : '' ?>><?= $y ?></option>
@@ -170,7 +171,7 @@ unset($months, $days);
 <div id="dr-view-v1">
 <?php if (empty($grouped)): ?>
     <div class="card">
-        <div class="empty-state"><?= __('dr_empty_global') ?></div>
+        <div class="empty-state"><?= __('daily_report_empty_global') ?></div>
     </div>
 <?php else: ?>
     <?php foreach ($grouped as $sid => $group): ?>
@@ -204,32 +205,32 @@ unset($months, $days);
             <div class="card-header">
                 <h3>
                     <?= htmlspecialchars($store['name']) ?>
-                    <?php if ($cumulativeMode === 'cumulative_system'): ?><span class="badge badge--warning badge--sm"><?= __('dr_badge_cumulative_system') ?></span><?php endif; ?>
-                    <?php if ($cumulativeMode === 'cumulative_input'): ?><span class="badge badge--info badge--sm"><?= __('dr_badge_cumulative_input') ?></span><?php endif; ?>
+                    <?php if ($cumulativeMode === 'cumulative_system'): ?><span class="badge badge--warning badge--sm"><?= __('daily_report_badge_cumulative_system') ?></span><?php endif; ?>
+                    <?php if ($cumulativeMode === 'cumulative_input'): ?><span class="badge badge--info badge--sm"><?= __('daily_report_badge_cumulative_input') ?></span><?php endif; ?>
                     <span class="badge badge--secondary badge--sm ml-xs"><?= min(5, count($group['reports'])) ?>/<?= count($group['reports']) ?></span>
                 </h3>
                 <div class="btn-group">
                     <a href="<?= $BASE_URL ?>/admin/stores/<?= $sid ?>/daily-reports/settings"
-                       class="btn btn--ghost btn--xs">⚙ <?= __('dr_settings') ?></a>
+                       class="btn btn--ghost btn--xs">⚙ <?= __('daily_report_settings') ?></a>
                     <a href="<?= $BASE_URL ?>/admin/stores/<?= $sid ?>/daily-reports/create"
-                       class="btn btn--primary btn--xs">+ <?= __('dr_new') ?></a>
+                       class="btn btn--primary btn--xs">+ <?= __('daily_report_new') ?></a>
                     <a href="<?= $BASE_URL ?>/admin/stores/<?= $sid ?>/daily-reports"
                        class="btn btn--ghost btn--xs"><?= __('view_all') ?></a>
                 </div>
             </div>
             <?php if (empty($reports)): ?>
-                <div class="empty-state"><?= __('dr_empty') ?></div>
+                <div class="empty-state"><?= __('daily_report_empty') ?></div>
             <?php else: ?>
             <div class="table-wrap">
                 <table class="data-table" data-mob-stack>
                     <thead>
                         <tr>
                             <th><?= __('date') ?></th>
-                            <th><?= __('dr_author') ?></th>
-                            <th class="text-right"><?= __('dr_sales') ?> (<?= $currency ?>)</th>
-                            <th class="text-right"><?= __('dr_customers') ?></th>
-                            <th class="text-right"><?= __('dr_labor') ?> (<?= $currency ?>)</th>
-                            <th class="text-right"><?= __('dr_waste') ?> (<?= $currency ?>)</th>
+                            <th><?= __('daily_report_author') ?></th>
+                            <th class="text-right"><?= __('daily_report_sales') ?> (<?= $currency ?>)</th>
+                            <th class="text-right"><?= __('daily_report_customers') ?></th>
+                            <th class="text-right"><?= __('daily_report_labor') ?> (<?= $currency ?>)</th>
+                            <th class="text-right"><?= __('daily_report_waste') ?> (<?= $currency ?>)</th>
                             <th><?= __('status') ?></th>
                             <th><?= __('actions') ?></th>
                         </tr>
@@ -246,26 +247,26 @@ unset($months, $days);
                             ?>
                             <tr data-href="<?= $BASE_URL ?>/admin/stores/<?= $sid ?>/daily-reports/<?= $rid ?>" class="tr--clickable">
                                 <td data-label="<?= htmlspecialchars(__('date')) ?>"><?= drAllFormatDate($report['report_date']) ?></td>
-                                <td data-label="<?= htmlspecialchars(__('dr_author')) ?>"><?= htmlspecialchars($authorName) ?></td>
-                                <td data-label="<?= htmlspecialchars(__('dr_sales') . ' (' . $currency . ')') ?>" class="text-right"><?= drAllFormatNum($cumulativeMode === 'cumulative_system' ? ($cumulativeTotals[$rid]['sales_total'] ?? $report['sales_total']) : $report['sales_total']) ?></td>
-                                <td data-label="<?= htmlspecialchars(__('dr_customers')) ?>" class="text-right"><?= drAllFormatNum($cumulativeMode === 'cumulative_system' ? ($cumulativeTotals[$rid]['customer_count'] ?? $report['customer_count']) : $report['customer_count']) ?></td>
-                                <td data-label="<?= htmlspecialchars(__('dr_labor') . ' (' . $currency . ')') ?>" class="text-right"><?= drAllFormatNum($cumulativeMode === 'cumulative_system' ? ($cumulativeTotals[$rid]['labor_cost'] ?? $report['labor_cost']) : $report['labor_cost']) ?></td>
-                                <td data-label="<?= htmlspecialchars(__('dr_waste') . ' (' . $currency . ')') ?>" class="text-right"><?= drAllFormatNum($cumulativeMode === 'cumulative_system' ? ($cumulativeTotals[$rid]['waste_total'] ?? $report['waste_total']) : $report['waste_total']) ?></td>
+                                <td data-label="<?= htmlspecialchars(__('daily_report_author')) ?>"><?= htmlspecialchars($authorName) ?></td>
+                                <td data-label="<?= htmlspecialchars(__('daily_report_sales') . ' (' . $currency . ')') ?>" class="text-right"><?= drAllFormatNum($cumulativeMode === 'cumulative_system' ? ($cumulativeTotals[$rid]['sales_total'] ?? $report['sales_total']) : $report['sales_total']) ?></td>
+                                <td data-label="<?= htmlspecialchars(__('daily_report_customers')) ?>" class="text-right"><?= drAllFormatNum($cumulativeMode === 'cumulative_system' ? ($cumulativeTotals[$rid]['customer_count'] ?? $report['customer_count']) : $report['customer_count']) ?></td>
+                                <td data-label="<?= htmlspecialchars(__('daily_report_labor') . ' (' . $currency . ')') ?>" class="text-right"><?= drAllFormatNum($cumulativeMode === 'cumulative_system' ? ($cumulativeTotals[$rid]['labor_cost'] ?? $report['labor_cost']) : $report['labor_cost']) ?></td>
+                                <td data-label="<?= htmlspecialchars(__('daily_report_waste') . ' (' . $currency . ')') ?>" class="text-right"><?= drAllFormatNum($cumulativeMode === 'cumulative_system' ? ($cumulativeTotals[$rid]['waste_total'] ?? $report['waste_total']) : $report['waste_total']) ?></td>
                                 <td data-label="<?= htmlspecialchars(__('status')) ?>">
                                     <?= $badgeHtml ?>
                                     <?php if (!empty($report['mail_sent_at'])): ?>
-                                        <span class="badge badge--active" title="<?= __('dr_mail_sent_at') ?> <?= htmlspecialchars($report['mail_sent_at']) ?>">✉</span>
+                                        <span class="badge badge--active" title="<?= __('daily_report_mail_sent_at') ?> <?= htmlspecialchars($report['mail_sent_at']) ?>">✉</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if ($st === 'validated'): ?>
                                         <a href="<?= $BASE_URL ?>/admin/stores/<?= $sid ?>/daily-reports/<?= $rid ?>/pdf"
-                                           class="btn btn--ghost btn--xs" target="_blank" onclick="event.stopPropagation()">PDF</a>
+                                           class="btn btn--ghost btn--xs" target="_blank" data-stop-propagation>PDF</a>
                                     <?php endif; ?>
                                     <?php if (!empty($authUser['is_admin'])): ?>
-                                        <form method="POST" action="<?= $BASE_URL ?>/admin/stores/<?= $sid ?>/daily-reports/<?= $rid ?>/delete" class="form-inline" data-confirm="<?= htmlspecialchars(__('dr_confirm_delete'), ENT_QUOTES) ?>">
+                                        <form method="POST" action="<?= $BASE_URL ?>/admin/stores/<?= $sid ?>/daily-reports/<?= $rid ?>/delete" class="form-inline" data-confirm="<?= htmlspecialchars(__('daily_report_confirm_delete'), ENT_QUOTES) ?>">
                                             <?= csrf_field() ?>
-                                            <button type="submit" class="btn btn--danger btn--xs" onclick="event.stopPropagation()"><?= __('delete') ?></button>
+                                            <button type="submit" class="btn btn--danger btn--xs" data-stop-propagation><?= __('delete') ?></button>
                                         </form>
                                     <?php endif; ?>
                                 </td>
@@ -286,7 +287,7 @@ unset($months, $days);
 <div id="dr-view-v2">
 <?php if (empty($byYearMonth)): ?>
     <div class="card">
-        <div class="empty-state"><?= __('dr_empty_global') ?></div>
+        <div class="empty-state"><?= __('daily_report_empty_global') ?></div>
     </div>
 <?php else: ?>
     <?php foreach ($byYearMonth as $year => $months): ?>
@@ -309,9 +310,9 @@ unset($months, $days);
                 $firstCurrency = currency_symbol($firstDayData['currency'] ?? 'JPY', $firstDayData['currency_style'] ?? 'kanji');
                 ?>
                 <div class="dr-v2-year-totals text-muted">
-                    <?= __('dr_sales') ?> <strong><?= drAllFormatNum($yearTotals['sales_total']) ?></strong>
+                    <?= __('daily_report_sales') ?> <strong><?= drAllFormatNum($yearTotals['sales_total']) ?></strong>
                     &nbsp;|&nbsp;
-                    <?= __('dr_customers') ?> <strong><?= drAllFormatNum($yearTotals['customer_count']) ?></strong>
+                    <?= __('daily_report_customers') ?> <strong><?= drAllFormatNum($yearTotals['customer_count']) ?></strong>
                 </div>
             </div>
 
@@ -328,14 +329,14 @@ unset($months, $days);
                 $monthId = 'dr-month-' . $year . '-' . $month;
                 ?>
                 <div class="dr-v2-month">
-                    <button type="button" class="dr-v2-month-toggle" onclick="drV2ToggleMonth('<?= $monthId ?>')">
+                    <button type="button" class="dr-v2-month-toggle" data-on-click="drV2ToggleMonth" data-args="<?= htmlspecialchars(json_encode([$monthId]), ENT_QUOTES) ?>">
                         <span class="dr-v2-month-name"><?= $monthNames[$month] ?? $month ?></span>
                         <span class="dr-v2-month-stats text-muted">
-                            <?= __('dr_sales') ?> <strong><?= drAllFormatNum($monthTotals['sales_total']) ?></strong>
+                            <?= __('daily_report_sales') ?> <strong><?= drAllFormatNum($monthTotals['sales_total']) ?></strong>
                             &nbsp;·&nbsp;
-                            <?= __('dr_customers') ?> <strong><?= drAllFormatNum($monthTotals['customer_count']) ?></strong>
+                            <?= __('daily_report_customers') ?> <strong><?= drAllFormatNum($monthTotals['customer_count']) ?></strong>
                             &nbsp;·&nbsp;
-                            <?= count($days) ?> <?= __('days') ?>
+                            <?= count($days) ?> <?= __('daily_report_days') ?>
                         </span>
                         <span class="dr-v2-month-arrow" id="<?= $monthId ?>-arrow">▼</span>
                     </button>
@@ -346,11 +347,11 @@ unset($months, $days);
                                 <thead>
                                     <tr>
                                         <th><?= __('date') ?></th>
-                                        <th class="text-right"><?= __('dr_v2_stores_count') ?></th>
-                                        <th class="text-right"><?= __('dr_sales') ?></th>
-                                        <th class="text-right"><?= __('dr_customers') ?></th>
-                                        <th class="text-right"><?= __('dr_labor') ?></th>
-                                        <th class="text-right"><?= __('dr_waste') ?></th>
+                                        <th class="text-right"><?= __('daily_report_v2_stores_count') ?></th>
+                                        <th class="text-right"><?= __('daily_report_sales') ?></th>
+                                        <th class="text-right"><?= __('daily_report_customers') ?></th>
+                                        <th class="text-right"><?= __('daily_report_labor') ?></th>
+                                        <th class="text-right"><?= __('daily_report_waste') ?></th>
                                         <th><?= __('actions') ?></th>
                                     </tr>
                                 </thead>
@@ -396,28 +397,28 @@ unset($months, $days);
                                             <td data-label="<?= htmlspecialchars(__('date')) ?>">
                                                 <strong><?= drAllFormatDate($date) ?></strong>
                                             </td>
-                                            <td data-label="<?= htmlspecialchars(__('dr_v2_stores_count')) ?>" class="text-right">
+                                            <td data-label="<?= htmlspecialchars(__('daily_report_v2_stores_count')) ?>" class="text-right">
                                                 <?= $storeCount ?>
                                             </td>
-                                            <td data-label="<?= htmlspecialchars(__('dr_sales')) ?>" class="text-right">
+                                            <td data-label="<?= htmlspecialchars(__('daily_report_sales')) ?>" class="text-right">
                                                 <strong><?= drAllFormatNum($totals['sales_total']) ?></strong>
                                                 <small class="text-muted"><?= $sym ?></small>
                                             </td>
-                                            <td data-label="<?= htmlspecialchars(__('dr_customers')) ?>" class="text-right">
+                                            <td data-label="<?= htmlspecialchars(__('daily_report_customers')) ?>" class="text-right">
                                                 <?= drAllFormatNum($totals['customer_count']) ?>
                                             </td>
-                                            <td data-label="<?= htmlspecialchars(__('dr_labor')) ?>" class="text-right">
+                                            <td data-label="<?= htmlspecialchars(__('daily_report_labor')) ?>" class="text-right">
                                                 <?= drAllFormatNum($totals['labor_cost']) ?>
                                                 <small class="text-muted"><?= $sym ?></small>
                                             </td>
-                                            <td data-label="<?= htmlspecialchars(__('dr_waste')) ?>" class="text-right">
+                                            <td data-label="<?= htmlspecialchars(__('daily_report_waste')) ?>" class="text-right">
                                                 <?= drAllFormatNum($totals['waste_total']) ?>
                                                 <small class="text-muted"><?= $sym ?></small>
                                             </td>
                                             <td>
                                                 <button type="button"
                                                         class="btn btn--ghost btn--xs"
-                                                        onclick="drV2OpenDetail(this)"
+                                                        data-on-click="drV2OpenDetail" data-args='["@this"]'
                                                         data-day="<?= $modalJson ?>">
                                                     ▶ <?= __('see_details') ?>
                                                 </button>
@@ -449,11 +450,11 @@ unset($months, $days);
 <!-- =========================================================
      Modal détail V2
      ========================================================= -->
-<div id="dr-v2-overlay" class="dr-v2-overlay" onclick="drV2CloseDetail()">
-    <div class="dr-v2-modal" onclick="event.stopPropagation()">
+<div id="dr-v2-overlay" class="dr-v2-overlay" data-on-click="drV2CloseDetail">
+    <div class="dr-v2-modal" data-stop-propagation>
         <div class="dr-v2-modal-header">
             <strong id="dr-v2-modal-title"></strong>
-            <button type="button" onclick="drV2CloseDetail()" class="sb-modal-close">×</button>
+            <button type="button" data-on-click="drV2CloseDetail" class="sb-modal-close">×</button>
         </div>
         <div class="dr-v2-modal-body">
             <div class="table-wrap">
@@ -461,11 +462,11 @@ unset($months, $days);
                     <thead>
                         <tr>
                             <th><?= __('store') ?></th>
-                            <th><?= __('dr_author') ?></th>
-                            <th class="text-right"><?= __('dr_sales') ?></th>
-                            <th class="text-right"><?= __('dr_customers') ?></th>
-                            <th class="text-right"><?= __('dr_labor') ?></th>
-                            <th class="text-right"><?= __('dr_waste') ?></th>
+                            <th><?= __('daily_report_author') ?></th>
+                            <th class="text-right"><?= __('daily_report_sales') ?></th>
+                            <th class="text-right"><?= __('daily_report_customers') ?></th>
+                            <th class="text-right"><?= __('daily_report_labor') ?></th>
+                            <th class="text-right"><?= __('daily_report_waste') ?></th>
                             <th><?= __('status') ?></th>
                             <th></th>
                         </tr>
@@ -476,12 +477,12 @@ unset($months, $days);
             </div>
         </div>
         <div class="dr-v2-modal-footer">
-            <button type="button" onclick="drV2CloseDetail()" class="btn btn--ghost btn--sm"><?= __('close') ?></button>
+            <button type="button" data-on-click="drV2CloseDetail" class="btn btn--ghost btn--sm"><?= __('close') ?></button>
         </div>
     </div>
 </div>
 
-<script>
+<script nonce="<?= function_exists('csp_nonce') ? csp_nonce() : '' ?>">
 (function () {
     var LS_KEY = 'kintai_dr_view';
 
@@ -508,11 +509,15 @@ unset($months, $days);
     }
 
     window.drSwitchView = function (v) {
-        localStorage.setItem(LS_KEY, v);
+        try { localStorage.setItem(LS_KEY, v); } catch (e) {}
         applyView(v);
     };
 
-    applyView(localStorage.getItem(LS_KEY) || 'v1');
+    // Vue par défaut : par jour (v2). Le choix fait avec le bouton est retenu dans le navigateur. Lecture protégée :
+    // localStorage peut lever une erreur (navigation privée, stockage bloqué), ce qui laissait les deux vues affichées.
+    var savedView = null;
+    try { savedView = localStorage.getItem(LS_KEY); } catch (e) {}
+    applyView(savedView === 'v1' || savedView === 'v2' ? savedView : 'v2');
 
     // ---- Collapse mois ----
     window.drV2ToggleMonth = function (id) {
@@ -529,7 +534,8 @@ unset($months, $days);
     document.querySelectorAll('.dr-v2-month-body').forEach(function (body) {
         var id    = body.id;
         var arrow = document.getElementById(id + '-arrow');
-        var state = localStorage.getItem('kintai_dr_month_' + id);
+        var state = null;
+        try { state = localStorage.getItem('kintai_dr_month_' + id); } catch (e) {}
         if (state === 'closed') {
             body.style.display = 'none';
             if (arrow) arrow.textContent = '▶';

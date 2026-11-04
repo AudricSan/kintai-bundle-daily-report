@@ -8,7 +8,40 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-10-23
+
+### Fixed
+- **La page des réglages d'un magasin répondait 500** (2.1.0) : la vue lisait `$recipientIds` et `$legacyRecipients` sans les définir, donc `UserPicker::selected()` recevait `null`. Les deux variables sont maintenant calculées en tête de vue depuis `mail_recipient_ids` et `mail_recipients`.
+- Le lien vers la page des rôles (réservé à l'Owner) lisait `$auth_user` au lieu de `$authUser` : l'Owner ne le voyait jamais.
+- Test `testEveryVariableReadByTheViewIsDefined` : échoue si la vue des réglages lit une variable ni fournie par le contrôleur ni définie en tête de vue.
+
+## [2.1.0] - 2026-10-23
+
 ### Changed
+- **Destinataires du rapport : on coche des employés du magasin** au lieu de saisir des adresses dans un champ texte. La liste vient du composant partagé du Core (`UserPicker`, contrat 1.29) ; on enregistre le compte de l'employé (`mail_recipient_ids`), donc un changement d'adresse est suivi et un compte désactivé ou retiré du magasin ne reçoit plus rien.
+- **Un e-mail par personne**, dans la langue de son compte : les destinataires ne voient plus les adresses des autres.
+- Les adresses saisies auparavant (`mail_recipients`) restent utilisées et sont listées à part dans les réglages ; on peut les retirer mais plus en ajouter.
+- Le bundle exige le contrat `^1.29`.
+- Tests : `DailyReportRecipientsTest` (envoi individuel, langue, comptes inactifs, adresses héritées, doublons).
+
+## [2.0.0] - 2026-10-23
+
+Première version stable de la ligne 2 : elle regroupe, à l'identique, tout ce qui a été publié en alpha et en bêta depuis la ligne 1 (voir les sections ci-dessous), sans changement fonctionnel propre à cette version.
+
+### Changed
+- **Traductions conformes au contrat** : 91 clés renommées avec le préfixe du bundle (`daily_report_…`), sans changement de texte affiché ; `tests/TranslationContractTest.php` impose désormais parité fr/en/ja, préfixe, collisions et clés connues.
+
+### Fixed
+
+- **Réglages : l'heure de validation automatique et les heures de rappel ne pouvaient pas être réglées.** Le formulaire n'avait aucun champ pour elles alors que `saveSettings()` les lit dans la requête : chaque enregistrement des réglages effaçait la validation automatique (la tâche `auto-validate` ne validait donc jamais rien) et remettait le rappel à 15:00 et l'heure « sans rapport » à 18:00. Une carte « Horaires » propose maintenant les trois heures (validation automatique, rappel, heure « sans rapport »), en fr/en/ja. `DailyReportSettingsFormTest` vérifie que chaque réglage enregistré a son champ.
+
+### Added
+
+- Contrat de bundle 1.24 : `ContractUsageTest` vérifie aussi que le bundle n'appelle que des fonctions globales déclarées par le contrat (`ContractUsageScanner::functionViolations()`).
+
+### Changed
+
+- Notifications (contrat 1.23, `kintai_contract` `^1.23`) : types `daily_report_submitted` et `daily_report_validated` déclarés au format enrichi (catégorie « reports », push par défaut, `reference_type` `daily_report`) ; le lien ouvrait déjà le rapport précis, l'ouvrir marque maintenant ses notifications comme lues.
 
 - Tests : plus aucun avis PHPUnit (55 auparavant) — les doublures sans attente sont des bouchons (`createStub()`), les mocks ne sont créés que dans les tests qui posent une attente, et les vérifications `->with()` sont conservées (`expects($this->atLeastOnce())`, ou `willReturnCallback()` par argument dans les méthodes utilitaires).
 - Aperçu PDF du rapport journalier : le bloc `<style>` porte le nonce CSP de la requête, en vue du retrait de `'unsafe-inline'` des styles dans la CSP de Kintai. Contrôle CI ajouté contre les styles en ligne dans les vues.

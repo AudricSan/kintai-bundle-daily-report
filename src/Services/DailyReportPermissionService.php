@@ -25,6 +25,7 @@ final class DailyReportPermissionService
 {
     private const DEFAULTS = [
         'enabled'               => true,
+        'mail_recipient_ids'    => [],
         'mail_recipients'       => [],
         'auto_send_on_validate' => false,
         'auto_validate_time'    => null,

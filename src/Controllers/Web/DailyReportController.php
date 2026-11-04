@@ -21,6 +21,7 @@ use kintai\Bundles\Installed\DailyReport\Services\DailyReportPdfService;
 use kintai\Bundles\Installed\DailyReport\Services\DailyReportPermissionService;
 use kintai\Contract\Services\NotificationService;
 use kintai\Contract\Services\TranslationService;
+use kintai\Contract\Services\UserSelection;
 use kintai\Contract\View\ViewRenderer;
 
 final class DailyReportController
@@ -40,6 +41,7 @@ final class DailyReportController
         private readonly ShiftTypeRepositoryInterface $shiftTypes,
         private readonly NotificationService $notifs,
         private readonly PermissionService $permissionService,
+        private readonly UserSelection $userSelection,
     ) {}
 
     // -------------------------------------------------------------------------
@@ -56,7 +58,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canViewList($authUser, $store, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_access_denied'));
+            throw new ForbiddenException(__('daily_report_error_access_denied'));
         }
 
         $status    = $request->query('status', '');
@@ -157,7 +159,7 @@ final class DailyReportController
         $queryStoreIds = $storeIdsFilter;
         if ($filterStoreId > 0) {
             if (!$isUnrestricted && !in_array($filterStoreId, $storeIdsFilter, true)) {
-                throw new ForbiddenException(__('error_daily_report_access_denied'));
+                throw new ForbiddenException(__('daily_report_error_access_denied'));
             }
             $queryStoreIds = [$filterStoreId];
         }
@@ -260,7 +262,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canCreate($authUser, $store, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_not_authorized_create'));
+            throw new ForbiddenException(__('daily_report_error_not_authorized_create'));
         }
 
         $today    = date('Y-m-d');
@@ -327,7 +329,7 @@ final class DailyReportController
 
         // Interdire les dates passées pour tous sauf le super admin
         if (empty($authUser['is_admin']) && $reportDate < date('Y-m-d')) {
-            $errors['report_date'] = __('dr_error_past_date');
+            $errors['report_date'] = __('daily_report_error_past_date');
             $html = $this->view->render('daily-report::daily-report-form', [
                 'store'      => $store,
                 'report'     => null,
@@ -396,8 +398,11 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canViewReport($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_access_denied'));
+            throw new ForbiddenException(__('daily_report_error_access_denied'));
         }
+
+        // Le rapport est ouvert par quelqu'un qui a le droit de le voir : ses notifications sont lues.
+        $this->notifs->markReadFor((int) $authUser['id'], 'daily_report', $reportId);
 
         $author   = $this->users->findById((int) $report['author_id']);
         $validator = $report['validated_by'] ? $this->users->findById((int) $report['validated_by']) : null;
@@ -439,7 +444,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canEdit($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_report_locked'));
+            throw new ForbiddenException(__('daily_report_error_report_locked'));
         }
 
         $settings = $this->permissions->getSettings($store);
@@ -475,7 +480,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canEdit($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_report_locked'));
+            throw new ForbiddenException(__('daily_report_error_report_locked'));
         }
 
         $data   = $request->allPost();
@@ -532,7 +537,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canSubmit($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_not_authorized_submit'));
+            throw new ForbiddenException(__('daily_report_error_not_authorized_submit'));
         }
 
         $submitted = $this->reports->save(array_merge($report, [
@@ -575,7 +580,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canValidate($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_not_authorized_validate'));
+            throw new ForbiddenException(__('daily_report_error_not_authorized_validate'));
         }
 
         $now     = date('Y-m-d H:i:s');
@@ -636,7 +641,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canSendMail($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_not_authorized_send'));
+            throw new ForbiddenException(__('daily_report_error_not_authorized_send'));
         }
 
         $mailAuthor = $this->users->findById((int) $report['author_id']) ?? [];
@@ -712,7 +717,7 @@ final class DailyReportController
         $bytes     = $this->pdfService->generateBytes($report, $store, $pdfAuthor, $this->translations->getLocale());
 
         if ($bytes === null) {
-            throw new NotFoundException(__('error_pdf_generation_failed'));
+            throw new NotFoundException(__('daily_report_error_pdf_generation_failed'));
         }
 
         $this->auditLogger->log($request, 'export.daily_report_pdf', 'daily_report', $reportId, [
@@ -741,7 +746,7 @@ final class DailyReportController
         $this->assertStoreAccess($request, $storeId);
 
         if (!$this->permissions->canDelete($authUser, $store, $report, $membership)) {
-            throw new ForbiddenException(__('error_daily_report_not_authorized_delete'));
+            throw new ForbiddenException(__('daily_report_error_not_authorized_delete'));
         }
 
         $this->reports->save(array_merge($report, [
@@ -776,15 +781,20 @@ final class DailyReportController
 
         $settings = $this->permissions->getSettings($store);
 
-        $html = $this->view->render('daily-report::daily-report-settings', [
+        return Response::html($this->renderSettings($store, $settings, $authUser, $membership, []));
+    }
+
+    /** @param array<string, mixed> $settings @param array<string, string> $errors */
+    private function renderSettings(array $store, array $settings, array $authUser, ?array $membership, array $errors): string
+    {
+        return $this->view->render('daily-report::daily-report-settings', [
             'store'      => $store,
             'settings'   => $settings,
             'authUser'   => $authUser,
             'membership' => $membership,
-            'errors'     => [],
+            'errors'     => $errors,
+            'candidates' => $this->userSelection->candidates((int) $store['id']),
         ], 'layout.app');
-
-        return Response::html($html);
     }
 
     public function saveSettings(Request $request): Response
@@ -821,9 +831,17 @@ final class DailyReportController
             $showColumns = $validColumns;
         }
 
+        $current   = $this->permissions->getSettings($store);
+        $selection = $this->userSelection->validate($storeId, (array) ($data['mail_recipient_ids'] ?? []));
+        if ($selection['error'] !== null) {
+            $errors = ['mail_recipient_ids' => __('daily_report_error_recipients_' . $selection['error'])];
+            return Response::html($this->renderSettings($store, array_merge($current, $data), $authUser, $membership, $errors), 422);
+        }
+
         $settings = [
             'enabled'               => !empty($data['enabled']),
-            'mail_recipients'       => $this->parseRecipients($data['mail_recipients'] ?? ''),
+            'mail_recipient_ids'    => $selection['ids'],
+            'mail_recipients'       => $this->keptLegacyRecipients($current, (array) ($data['legacy_recipients'] ?? [])),
             'auto_send_on_validate' => !empty($data['auto_send_on_validate']),
             'auto_validate_time'    => $autoValidateTime,
             'reminder_time'         => $reminderTime,
@@ -905,7 +923,7 @@ final class DailyReportController
     {
         $report = $this->reports->findById($id);
         if ($report === null || (int) $report['store_id'] !== $storeId) {
-            throw new NotFoundException(__('error_report_not_found'));
+            throw new NotFoundException(__('daily_report_error_report_not_found'));
         }
         return $report;
     }
@@ -960,13 +978,21 @@ final class DailyReportController
         return $errors;
     }
 
-    /** @return string[] */
-    private function parseRecipients(string $raw): array
+    /**
+     * Adresses saisies à la main avant la sélection d'employés : on ne peut plus en ajouter, seulement retirer celles qui
+     * existent déjà (une adresse absente de la liste enregistrée est ignorée).
+     *
+     * @param array<string, mixed> $current Réglages enregistrés
+     * @param array<mixed> $submitted Adresses restées cochées dans le formulaire
+     * @return string[]
+     */
+    private function keptLegacyRecipients(array $current, array $submitted): array
     {
-        $emails = array_map('trim', explode("\n", str_replace(',', "\n", $raw)));
+        $stored = array_map('strval', (array) ($current['mail_recipients'] ?? []));
+        $keep   = array_map(static fn($e): string => strtolower(trim((string) $e)), $submitted);
         return array_values(array_filter(
-            $emails,
-            fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL) !== false,
+            $stored,
+            static fn(string $e): bool => in_array(strtolower($e), $keep, true) && filter_var($e, FILTER_VALIDATE_EMAIL) !== false,
         ));
     }
 

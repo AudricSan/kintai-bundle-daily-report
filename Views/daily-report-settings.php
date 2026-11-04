@@ -8,15 +8,17 @@
 $storeId = (int) $store['id'];
 $action  = $BASE_URL . '/admin/stores/' . $storeId . '/daily-reports/settings';
 
-$recipients        = implode("\n", $settings['mail_recipients'] ?? []);
-$autoValidateTime  = $settings['auto_validate_time'] ?? '';
+// Employés choisis (comptes) et adresses saisies avant la sélection, encore envoyées mais plus ajoutables.
+$recipientIds      = array_map('intval', (array) ($settings['mail_recipient_ids'] ?? []));
+$legacyRecipients  = array_values(array_filter((array) ($settings['mail_recipients'] ?? []), 'is_string'));
+$autoValidateTime = $settings['auto_validate_time'] ?? '';
 $reminderTime      = $settings['reminder_time']      ?? '15:00';
 $noReportTime      = $settings['no_report_time']     ?? '18:00';
 ?>
 
 <div class="page-header">
     <h2 class="page-header__title">
-        <?= __('dr_settings') ?> — <?= htmlspecialchars($store['name']) ?>
+        <?= __('daily_report_settings') ?> — <?= htmlspecialchars($store['name']) ?>
     </h2>
     <div class="page-header__actions">
         <a href="<?= back_url($BASE_URL . '/admin/stores/' . $storeId . '/daily-reports') ?>"
@@ -39,19 +41,19 @@ $noReportTime      = $settings['no_report_time']     ?? '18:00';
 
     <!-- ── Activation ── -->
     <div class="card card--mb">
-        <div class="card-header"><?= __('dr_setting_enabled') ?></div>
+        <div class="card-header"><?= __('daily_report_setting_enabled') ?></div>
         <div class="card-body form-stack">
             <label class="check-label">
                 <input type="checkbox" name="enabled" value="1"
                        <?= !empty($settings['enabled']) ? 'checked' : '' ?>>
-                <span><?= __('dr_setting_enabled_hint') ?></span>
+                <span><?= __('daily_report_setting_enabled_hint') ?></span>
             </label>
             <div class="form-group">
-                <label class="form-label"><?= __('dr_setting_cumulative') ?></label>
+                <label class="form-label"><?= __('daily_report_setting_cumulative') ?></label>
                 <select name="cumulative_mode" class="form-control form-control-sm">
-                    <option value="per_day" <?= $settings['cumulative_mode'] === 'per_day' ? 'selected' : '' ?>><?= __('dr_mode_per_day') ?></option>
-                    <option value="cumulative_system" <?= $settings['cumulative_mode'] === 'cumulative_system' ? 'selected' : '' ?>><?= __('dr_mode_cumulative_system') ?></option>
-                    <option value="cumulative_input" <?= $settings['cumulative_mode'] === 'cumulative_input' ? 'selected' : '' ?>><?= __('dr_mode_cumulative_input') ?></option>
+                    <option value="per_day" <?= $settings['cumulative_mode'] === 'per_day' ? 'selected' : '' ?>><?= __('daily_report_mode_per_day') ?></option>
+                    <option value="cumulative_system" <?= $settings['cumulative_mode'] === 'cumulative_system' ? 'selected' : '' ?>><?= __('daily_report_mode_cumulative_system') ?></option>
+                    <option value="cumulative_input" <?= $settings['cumulative_mode'] === 'cumulative_input' ? 'selected' : '' ?>><?= __('daily_report_mode_cumulative_input') ?></option>
                 </select>
             </div>
         </div>
@@ -59,12 +61,12 @@ $noReportTime      = $settings['no_report_time']     ?? '18:00';
 
     <!-- ── Permissions ── -->
     <div class="card card--mb">
-        <div class="card-header"><?= __('dr_setting_permissions') ?></div>
+        <div class="card-header"><?= __('daily_report_setting_permissions') ?></div>
         <div class="card-body">
             <p class="form-hint">
-                <?= __('dr_setting_permissions_hint') ?>
+                <?= __('daily_report_setting_permissions_hint') ?>
                 <?php // La page des rôles est réservée à l'Owner : un lien y menait les gérants vers une page 403. ?>
-                <?php if (!empty($auth_user['is_admin'])): ?>
+                <?php if (!empty($authUser['is_admin'])): ?>
                     <a href="<?= route_url('admin.roles') ?>"><?= __('roles') ?></a>
                 <?php else: ?>
                     <?= __('roles') ?>
@@ -75,24 +77,75 @@ $noReportTime      = $settings['no_report_time']     ?? '18:00';
 
     <!-- ── Notifications e-mail ── -->
     <div class="card card--mb">
-        <div class="card-header"><?= __('dr_setting_notifications') ?></div>
+        <div class="card-header"><?= __('daily_report_setting_notifications') ?></div>
         <div class="card-body form-stack">
 
             <div class="form-group">
-                <label class="form-label"><?= __('dr_setting_recipients') ?></label>
-                <textarea name="mail_recipients" class="form-control" rows="4"
-                          placeholder="manager@example.com&#10;direction@example.com"
-                ><?= htmlspecialchars($recipients) ?></textarea>
-                <span class="form-hint"><?= __('dr_setting_recipients_hint') ?></span>
+                <?= \kintai\Contract\View\Components\UserPicker::make('mail_recipient_ids', $candidates ?? [])
+                    ->selected($recipientIds)
+                    ->legend(__('daily_report_setting_recipients'))
+                    ->hint(__('daily_report_setting_recipients_hint'))
+                    ->render() ?>
+                <?php if (!empty($errors['mail_recipient_ids'])): ?>
+                    <span class="form-error"><?= htmlspecialchars((string) $errors['mail_recipient_ids']) ?></span>
+                <?php endif; ?>
             </div>
 
+            <?php if ($legacyRecipients !== []): ?>
+                <div class="form-group">
+                    <fieldset class="user-picker">
+                        <legend class="user-picker__legend"><?= __('daily_report_setting_legacy_recipients') ?></legend>
+                        <p class="user-picker__hint"><?= __('daily_report_setting_legacy_recipients_hint') ?></p>
+                        <ul class="user-picker__list">
+                            <?php foreach ($legacyRecipients as $address): ?>
+                                <li class="user-picker__item">
+                                    <label class="user-picker__label">
+                                        <input type="checkbox" name="legacy_recipients[]" value="<?= htmlspecialchars((string) $address, ENT_QUOTES) ?>" checked>
+                                        <span class="user-picker__name"><?= htmlspecialchars((string) $address) ?></span>
+                                    </label>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </fieldset>
+                </div>
+            <?php endif; ?>
+
             <div class="form-group">
-                <label class="form-label"><?= __('dr_setting_auto_send') ?></label>
+                <label class="form-label"><?= __('daily_report_setting_auto_send') ?></label>
                 <label class="check-label">
                     <input type="checkbox" name="auto_send_on_validate" value="1"
                            <?= !empty($settings['auto_send_on_validate']) ? 'checked' : '' ?>>
-                    <span><?= __('dr_setting_auto_send_hint') ?></span>
+                    <span><?= __('daily_report_setting_auto_send_hint') ?></span>
                 </label>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── Horaires : validation automatique et rappels ── -->
+    <div class="card card--mb">
+        <div class="card-header"><?= __('daily_report_setting_times') ?></div>
+        <div class="card-body form-stack">
+
+            <div class="form-group">
+                <label class="form-label" for="dr-auto-validate-time"><?= __('daily_report_setting_auto_validate_time') ?></label>
+                <input type="time" id="dr-auto-validate-time" name="auto_validate_time" class="form-control form-control-sm"
+                       value="<?= htmlspecialchars((string) $autoValidateTime) ?>">
+                <span class="form-hint"><?= __('daily_report_setting_auto_validate_time_hint') ?></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="dr-reminder-time"><?= __('daily_report_setting_reminder_time') ?></label>
+                <input type="time" id="dr-reminder-time" name="reminder_time" class="form-control form-control-sm"
+                       value="<?= htmlspecialchars((string) $reminderTime) ?>">
+                <span class="form-hint"><?= __('daily_report_setting_reminder_time_hint') ?></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="dr-no-report-time"><?= __('daily_report_setting_no_report_time') ?></label>
+                <input type="time" id="dr-no-report-time" name="no_report_time" class="form-control form-control-sm"
+                       value="<?= htmlspecialchars((string) $noReportTime) ?>">
+                <span class="form-hint"><?= __('daily_report_setting_no_report_time_hint') ?></span>
             </div>
 
         </div>
@@ -100,9 +153,9 @@ $noReportTime      = $settings['no_report_time']     ?? '18:00';
 
     <!-- ── Colonnes du planning ── -->
     <div class="card card--mb">
-        <div class="card-header"><?= __('dr_setting_columns') ?></div>
+        <div class="card-header"><?= __('daily_report_setting_columns') ?></div>
         <div class="card-body form-stack">
-            <p class="form-hint mb-sm"><?= __('dr_setting_columns_hint') ?></p>
+            <p class="form-hint mb-sm"><?= __('daily_report_setting_columns_hint') ?></p>
             <div class="check-group">
                 <?php
                 $allCols = [
@@ -130,7 +183,7 @@ $noReportTime      = $settings['no_report_time']     ?? '18:00';
 
             <!-- Aperçu -->
             <div class="mt-sm">
-                <label class="form-label"><?= __('dr_setting_columns_preview') ?></label>
+                <label class="form-label"><?= __('daily_report_setting_columns_preview') ?></label>
                 <div class="table-responsive">
                     <table class="data-table" id="drColumnPreview">
                         <thead>
@@ -145,12 +198,12 @@ $noReportTime      = $settings['no_report_time']     ?? '18:00';
                         </thead>
                         <tbody>
                             <tr>
-                                <?php if (in_array('employee', $showCols, true)): ?><td data-col="employee"><?= __('dr_col_preview_employee') ?></td><?php endif; ?>
-                                <?php if (in_array('type', $showCols, true)): ?><td data-col="type" class="td-muted"><?= __('dr_col_preview_type') ?></td><?php endif; ?>
-                                <?php if (in_array('schedule', $showCols, true)): ?><td data-col="schedule" class="td-muted td-nowrap"><?= __('dr_col_preview_schedule') ?></td><?php endif; ?>
-                                <?php if (in_array('gross_hours', $showCols, true)): ?><td data-col="gross_hours" class="td-right td-mono"><?= __('dr_col_preview_gross') ?></td><?php endif; ?>
-                                <?php if (in_array('pause', $showCols, true)): ?><td data-col="pause" class="td-right td-muted td-mono"><?= __('dr_col_preview_pause') ?></td><?php endif; ?>
-                                <?php if (in_array('net_hours', $showCols, true)): ?><td data-col="net_hours" class="td-right td-mono"><?= __('dr_col_preview_net') ?></td><?php endif; ?>
+                                <?php if (in_array('employee', $showCols, true)): ?><td data-col="employee"><?= __('daily_report_col_preview_employee') ?></td><?php endif; ?>
+                                <?php if (in_array('type', $showCols, true)): ?><td data-col="type" class="td-muted"><?= __('daily_report_col_preview_type') ?></td><?php endif; ?>
+                                <?php if (in_array('schedule', $showCols, true)): ?><td data-col="schedule" class="td-muted td-nowrap"><?= __('daily_report_col_preview_schedule') ?></td><?php endif; ?>
+                                <?php if (in_array('gross_hours', $showCols, true)): ?><td data-col="gross_hours" class="td-right td-mono"><?= __('daily_report_col_preview_gross') ?></td><?php endif; ?>
+                                <?php if (in_array('pause', $showCols, true)): ?><td data-col="pause" class="td-right td-muted td-mono"><?= __('daily_report_col_preview_pause') ?></td><?php endif; ?>
+                                <?php if (in_array('net_hours', $showCols, true)): ?><td data-col="net_hours" class="td-right td-mono"><?= __('daily_report_col_preview_net') ?></td><?php endif; ?>
                             </tr>
                         </tbody>
                     </table>

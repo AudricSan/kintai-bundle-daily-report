@@ -35,7 +35,7 @@ $reportDate  = $report['report_date'] ?? '';
 $authorName  = trim(($author['last_name'] ?? '') . ' ' . ($author['first_name'] ?? ''))
                ?: ($author['display_name'] ?? ($author['email'] ?? '—'));
 $st          = $report['status'] ?? 'draft';
-$statusLabel = __('dr_status_' . $st);
+$statusLabel = __('daily_report_status_' . $st);
 $statusClass = match ($st) {
     'submitted' => 'status-submitted',
     'validated' => 'status-validated',
@@ -74,7 +74,7 @@ body { font-family: sun-exta, Arial, sans-serif; }
       <span class="brand">Kintai<span class="brand-store"><?= htmlspecialchars($storeName) ?></span></span>
     </td>
     <td class="vt col-right doc-title">
-      <span class="doc-title-main"><?= __('dr_title') ?></span>
+      <span class="doc-title-main"><?= __('daily_report_title') ?></span>
       <span class="doc-ref"><?= drPdfDate($reportDate) ?></span>
       <span class="doc-ref"><?= __('payslip_issued_on') ?> <?= date('d/m/Y') ?></span>
     </td>
@@ -86,7 +86,7 @@ body { font-family: sun-exta, Arial, sans-serif; }
 <table class="meta-table">
   <tbody>
     <tr>
-      <td class="label"><?= __('dr_author') ?></td>
+      <td class="label"><?= __('daily_report_author') ?></td>
       <td><?= htmlspecialchars($authorName) ?></td>
     </tr>
     <?php if (!empty($author['employee_code'])): ?>
@@ -103,32 +103,32 @@ body { font-family: sun-exta, Arial, sans-serif; }
 </table>
 
 <!-- KPI -->
-<div class="section-title section-title--no-mt"><?= __('dr_title') ?></div>
+<div class="section-title section-title--no-mt"><?= __('daily_report_title') ?></div>
 <table class="kpi-table">
   <tbody>
     <tr>
-      <td class="label"><?= __('dr_sales') ?></td>
+      <td class="label"><?= __('daily_report_sales') ?></td>
       <td class="value"><?= drPdfNum($report['sales_total'] ?? 0) ?> <?= $currency ?></td>
     </tr>
     <tr class="kpi-alt">
-      <td class="label"><?= __('dr_customers') ?></td>
+      <td class="label"><?= __('daily_report_customers') ?></td>
       <td class="value"><?= drPdfNum($report['customer_count'] ?? 0) ?></td>
     </tr>
     <tr>
-      <td class="label"><?= __('dr_labor') ?></td>
+      <td class="label"><?= __('daily_report_labor') ?></td>
       <td class="value"><?= drPdfNum($report['labor_cost'] ?? 0) ?> <?= $currency ?></td>
     </tr>
     <tr class="kpi-alt">
-      <td class="label"><?= __('dr_waste') ?></td>
+      <td class="label"><?= __('daily_report_waste') ?></td>
       <td class="value"><?= drPdfNum($report['waste_total'] ?? 0) ?> <?= $currency ?></td>
     </tr>
   </tbody>
 </table>
 
 <!-- Shifts du jour -->
-<div class="section-title"><?= __('dr_shifts_of_day') ?></div>
+<div class="section-title"><?= __('daily_report_shifts_of_day') ?></div>
 <?php if (empty($shiftRows)): ?>
-  <p class="dr-no-shift"><?= __('dr_no_shifts') ?></p>
+  <p class="dr-no-shift"><?= __('daily_report_no_shifts') ?></p>
 <?php else: ?>
 <table class="dr-shifts-table">
   <thead>
@@ -159,7 +159,7 @@ body { font-family: sun-exta, Arial, sans-serif; }
 <!-- Notes -->
 <?php if (!empty($report['notes'])): ?>
 <div class="notes-section">
-  <div class="section-title"><?= __('dr_notes') ?></div>
+  <div class="section-title"><?= __('daily_report_notes') ?></div>
   <div class="notes-box">
     <?= nl2br(htmlspecialchars($report['notes'])) ?>
   </div>
@@ -176,13 +176,13 @@ body { font-family: sun-exta, Arial, sans-serif; }
     </tr>
     <?php if (!empty($report['submitted_at'])): ?>
     <tr>
-      <td class="label"><?= __('dr_submitted_at') ?></td>
+      <td class="label"><?= __('daily_report_submitted_at') ?></td>
       <td><?= drPdfDt($report['submitted_at']) ?></td>
     </tr>
     <?php endif; ?>
     <?php if (!empty($report['validated_at'])): ?>
     <tr>
-      <td class="label"><?= __('dr_validated_at') ?></td>
+      <td class="label"><?= __('daily_report_validated_at') ?></td>
       <td><?= drPdfDt($report['validated_at']) ?></td>
     </tr>
     <?php endif; ?>
@@ -193,12 +193,12 @@ body { font-family: sun-exta, Arial, sans-serif; }
 <table class="sig-table">
   <tr>
     <td class="sig-col-left">
-      <div class="sig-label"><?= __('dr_author') ?></div>
+      <div class="sig-label"><?= __('daily_report_author') ?></div>
       <div class="sig-area"></div>
       <div class="sig-name"><?= htmlspecialchars($authorName) ?></div>
     </td>
     <td class="sig-col-right">
-      <div class="sig-label"><?= __('dr_validated_by') ?></div>
+      <div class="sig-label"><?= __('daily_report_validated_by') ?></div>
       <div class="sig-area"></div>
       <div class="sig-name"><?= htmlspecialchars($storeName) ?></div>
     </td>

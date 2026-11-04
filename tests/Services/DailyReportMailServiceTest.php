@@ -33,7 +33,11 @@ final class DailyReportMailServiceTest extends TestCase
             $this->createStub(TranslationRepositoryInterface::class),
             $this->createStub(LanguageRepositoryInterface::class),
         );
-        $this->service     = new DailyReportMailService($this->permissions, $mailer, $translations);
+        $this->service     = new DailyReportMailService($this->permissions, $mailer, $translations, new \kintai\Core\Services\UserSelection(
+            $this->createStub(\kintai\Core\Repositories\StoreUserRepositoryInterface::class),
+            $this->createStub(\kintai\Core\Repositories\UserRepositoryInterface::class),
+            new PermissionService($this->createStub(RoleAssignmentRepositoryInterface::class), $this->createStub(RoleRepositoryInterface::class)),
+        ));
     }
 
     private function report(string $date = '2025-06-15'): array
